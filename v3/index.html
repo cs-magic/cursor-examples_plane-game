@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞机大战</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-overlay">
+            <div id="player-stats">
+                <div id="health-bar"></div>
+                <div id="energy-bar"></div>
+                <div id="score">得分: 0</div>
+            </div>
+            <button id="menu-button">菜单</button>
+            <div id="menu" class="hidden">
+                <!-- 菜单内容将在 JavaScript 中动态生成 -->
+            </div>
+        </div>
+        <div id="level-complete" class="hidden">
+            <h2>关卡完成！</h2>
+            <button id="next-level">下一关</button>
+        </div>
+        <div id="game-over" class="hidden">
+            <h2>游戏结束</h2>
+            <button id="restart">重新开始</button>
+        </div>
+    </div>
+    <script src="utils.js"></script>
+    <script src="audio.js"></script>
+    <script src="entities.js"></script>
+    <script src="levels.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

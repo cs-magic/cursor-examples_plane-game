@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>酷炫飞机大战</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #000;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        #settingsPanel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: none;
+        }
+
+        .settings-content {
+            padding: 20px;
+            max-width: 600px;
+            margin: 20px auto;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100% - 40px); /* 减去上下边距 */
+        }
+
+        .settings-scroll-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 10px; /* 为滚动条留出空间 */
+        }
+
+        .setting-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .setting-buttons .button {
+            width: 48%; /* 稍微减小按钮宽度，留出间隔 */
+        }
+
+        @media (max-width: 768px) {
+            .settings-content {
+                margin: 10px auto;
+                min-height: calc(100% - 20px);
+            }
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .setting-group input[type="number"],
+        .setting-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #00FFFF;
+            background-color: #222;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            background-color: #222;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        #startScreen, #endScreen, #victoryScreen, #pauseScreen, #helpPanel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            z-index: 10;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .3), transparent);
+            transition: all 0.6s;
+        }
+
+        .button:hover:before {
+            left: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.18), 0 5px 5px rgba(0, 0, 0, 0.12);
+        }
+
+        .button:active {
+            transform: translateY(1px);
+        }
+
+        h1, h2 {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px #000, 0 0 20px #00FFFF;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 36px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px #000, 0 0 10px #FFD700;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+
+        #controlPanel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        #helpContent {
+            max-height: 70%;
+            overflow-y: auto;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #000;
+            border-radius: 15px;
+            margin: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        #helpContent p {
+            margin: 15px 0;
+        }
+        #closeHelpButton {
+            align-self: flex-end;
+            margin: 20px;
+        }
+        h1, h2 {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px #000, 0 0 20px #00FFFF;
+        }
+
+        #settingsPanel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* 为 iOS 设备添加弹性滚动 */
+        }
+
+        .settings-content {
+            background-color: #111;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            margin: 20px auto;
+            overflow-y: auto;
+            max-height: 80vh;
+            -webkit-overflow-scrolling: touch; /* 为 iOS 设备添加弹性滚动 */
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+            padding: 0 10px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .setting-group input[type="number"],
+        .setting-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #00FFFF;
+            background-color: #222;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+            box-sizing: border-box;
+        }
+
+        .setting-group select {
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300FFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px auto;
+            padding-right: 30px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            padding: 0 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            background-color: #222;
+            padding: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .checkbox-container label {
+            font-size: 14px;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .setting-buttons {
+            margin-top: auto;
+            padding: 0 10px;
+        }
+
+        .button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .settings-content {
+                width: 95%;
+                padding: 15px;
+                height: 95%;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .checkbox-container {
+                padding: 12px;
+            }
+
+            .checkbox-container input[type="checkbox"] {
+                width: 24px;
+                height: 24px;
+                flex-shrink: 0;
+            }
+
+            .checkbox-container label {
+                font-size: 14px;
+                margin-left: 5px;
+            }
+
+            .setting-group input[type="number"],
+            .setting-group select,
+            .button {
+                font-size: 16px;
+                padding: 12px;
+                width: 100%;
+            }
+
+            .setting-group select {
+                background-position: right 15px center;
+                background-size: 15px auto;
+                padding-right: 40px;
+            }
+        }
+
+        /* 在现有的样式后面添加以下码 */
+        #mobileControls {
+            position: absolute;
+            bottom: env(safe-area-inset-bottom, 20px);
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none; /* 这行确保整个控制区域不会阻挡其他元素的点击 */
+            z-index: 100;
+        }
+
+        #joystickContainer, #actionButtons, .actionButton {
+            pointer-events: auto; /* 这行确保控制元素本身可以被点击 */
+        }
+
+        /* 添加媒体查询，只在移动设备上显示移动控制 */
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #mobileControls {
+                display: none;
+            }
+        }
+
+        /* 确保开始屏幕在移动控制之上 */
+        #startScreen, #endScreen, #victoryScreen, #pauseScreen, #helpPanel, #settingsPanel {
+            z-index: 1000; /* 确保这些屏幕在移动控制之上 */
+        }
+
+        #joystickContainer {
+            width: 120px;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            position: relative;
+            pointer-events: auto;
+        }
+
+        #joystick {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #actionButtons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .actionButton {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 768px) {
+            #controlPanel {
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #mobileControls {
+                display: none;
+            }
+        }
+
+        /* 现有样式保持不变 */
+
+        /* 添加以下新样式 */
+        html, body {
+            position: fixed;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        #mobileControls {
+            position: absolute;
+            bottom: env(safe-area-inset-bottom, 20px);
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+
+
+        #joystickContainer {
+            width: 120px;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            position: relative;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        #joystick {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: none;
+        }
+
+        #actionButtons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .actionButton {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        @media (max-width: 768px) {
+            #controlPanel {
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #mobileControls {
+                display: none;
+            }
+        }
+
+        /* 在现有的样式后添加以下内容 */
+        #settingsPanel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        .settings-content {
+            background-color: #111;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            color: #fff;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .setting-group input[type="number"],
+        .setting-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #00FFFF;
+            background-color: #222;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            background-color: #222;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 5px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .checkbox-container label {
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .settings-content {
+                width: 95%;
+                padding: 15px;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+
+        .setting-group select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300FFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px auto;
+            padding-right: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .setting-group select {
+                font-size: 16px; /* 防止 iOS 缩放 */
+                padding: 15px 10px; /* 增加点击区域 */
+            }
+        }
+
+        .custom-select {
+            position: relative;
+            font-family: Arial;
+        }
+
+        .custom-select .select-selected {
+            background-color: #222;
+            color: #fff;
+            padding: 12px 16px;
+            border: 1px solid #00FFFF;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 10px;
+        }
+
+        .custom-select .select-selected:after {
+            position: absolute;
+            content: "";
+            top: 50%;
+            right: 10px;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            border-color: #fff transparent transparent transparent;
+        }
+
+        .custom-select .select-items {
+            position: absolute;
+            background-color: #222;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 9999; /* 确保这个值足够高 */
+            border: 1px solid #00FFFF;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .custom-select .select-items div {
+            color: #fff;
+            padding: 12px 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .custom-select .select-items div:hover,
+        .custom-select .select-items div:active {
+            background-color: rgba(0, 255, 255, 0.1);
+        }
+
+        /* 添加这个新样式 */
+        .custom-select .select-items.select-hide {
+            display: none;
+        }
+
+        .select-hide {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+
+
+
+        <canvas id="gameCanvas"></canvas>
+
+
+
+        <div id="startScreen">
+            <h1>酷炫飞机大战</h1>
+            <button id="startButton" class="button">开始游戏</button>
+            <button id="settingsButton" class="button">设置</button>
+        </div>
+        <div id="endScreen" style="display: none;">
+            <h2>游戏结束</h2>
+            <p id="finalScore"></p>
+            <button id="restartButton" class="button">重新开始</button>
+        </div>
+        <div id="victoryScreen" style="display: none;">
+            <h2>胜利！</h2>
+            <p id="victoryScore"></p>
+            <button id="nextLevelButton" class="button">下一关</button>
+        </div>
+        <div id="pauseScreen" style="display: none;">
+            <h2>游戏暂停</h2>
+            <button id="resumeButton" class="button">继续游戏</button>
+        </div>
+
+
+
+        <div id="helpPanel" style="display: none;">
+            <h2>游戏说明</h2>
+            <div id="helpContent"></div>
+            <button id="closeHelpButton" class="button">关闭</button>
+        </div>
+        <div id="score">0</div>
+
+                                <!-- 在 #controlPanel 之前添加以下代码 -->
+                                <div id="settingsPanel" style="display: none;">
+                                    <div class="settings-content">
+                                        <div class="settings-scroll-area">
+                                            <h2>游戏设置</h2>
+                                            <div class="setting-group">
+                                                <label for="gameDuration">游戏时长（秒）：</label>
+                                                <input type="number" id="gameDuration" min="30" max="300" value="60">
+                                            </div>
+                                            <div class="setting-group">
+                                                <label for="initialHealth">初始生命值：</label>
+                                                <input type="number" id="initialHealth" min="50" max="200" value="100">
+                                            </div>
+                                            <div class="setting-group">
+                                                <label for="initialDifficulty">初始难度级别：</label>
+                                                <select id="initialDifficulty">
+                                                    <option value="easy">简单</option>
+                                                    <option value="medium" selected>中等</option>
+                                                    <option value="hard">困难</option>
+                                                </select>
+                                            </div>
+                                            <div class="setting-group">
+                                                <h3>可用子弹类型：</h3>
+                                                <div id="bulletTypeCheckboxes" class="checkbox-grid"></div>
+                                            </div>
+                                            <div class="setting-group">
+                                                <h3>敌方种类：</h3>
+                                                <div id="enemyTypeCheckboxes" class="checkbox-grid"></div>
+                                            </div>
+                                        </div>
+                                        <div class="setting-buttons">
+                                            <button id="saveSettingsButton" class="button">保存设置</button>
+                                            <button id="closeSettingsButton" class="button">关闭</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                
+        <div id="controlPanel">
+            <button id="pauseButton" class="button">暂停</button>
+            <button id="helpButton" class="button">帮助</button>
+        </div>
+        <button id="restart-button">重新开始</button>
+
+        <!-- 在 <div id="gameContainer"> 内部，添加以下代码 -->
+        <div id="mobileControls">
+            <div id="joystickContainer">
+                <div id="joystick"></div>
+            </div>
+            <div id="actionButtons">
+                <button id="chargeButton" class="actionButton">蓄力</button>
+                <button id="specialButton" class="actionButton">特殊</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
