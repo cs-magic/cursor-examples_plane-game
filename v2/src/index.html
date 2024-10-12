@@ -17,13 +17,18 @@
         }
 
         #gameContainer {
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
         }
 
-        canvas {
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
         }
@@ -163,10 +168,9 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            font-family: 'Ma Shan Zheng', cursive;
-            font-size: 48px;
-            color: #FFD700;
-            text-shadow: 2px 2px 4px #000, 0 0 10px #FFD700;
+            font-size: 24px;
+            color: #fff;
+            z-index: 10;
         }
         #controlPanel {
             position: absolute;
@@ -360,23 +364,53 @@
         /* 在现有的样式后面添加以下码 */
         #mobileControls {
             position: absolute;
-            bottom: env(safe-area-inset-bottom, 20px);
+            bottom: 20px;
             left: 20px;
             right: 20px;
             display: flex;
             justify-content: space-between;
-            pointer-events: none; /* 这行确保整个控制区域不会阻挡其他元素的点击 */
-            z-index: 100;
+            z-index: 10;
         }
 
-        #joystickContainer, #actionButtons, .actionButton {
-            pointer-events: auto; /* 这行确保控制元素本身可以被点击 */
+        #joystickContainer {
+            width: 120px;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            position: relative;
         }
 
-        /* 添加媒体查询，只在移动设备上显示移动控制 */
+        #joystick {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+        }
+
+        #actionButtons {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .actionButton {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: #fff;
+        }
+
         @media (max-width: 768px) {
-            #mobileControls {
-                display: flex;
+            #controlPanel {
+                display: none;
             }
         }
 
@@ -668,7 +702,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            z-index: 9999; /* 确保这个值足够高 */
+            z-index: 9999; /* 确保这个值够高 */
             border: 1px solid #00FFFF;
             border-top: none;
             border-radius: 0 0 10px 10px;
@@ -694,17 +728,49 @@
         .select-hide {
             display: none;
         }
+
+        #healthBarContainer {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 200px;
+                height: 20px;
+                background-color: rgba(255, 0, 0, 0.3);
+                border: 2px solid #fff;
+                border-radius: 10px;
+                overflow: hidden;
+                z-index: 1000; /* 确保它在其他元素之上 */
+            }
+
+            #healthBar {
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(to right, #ff0000, #ffff00, #00ff00);
+                background-size: 200% 100%;
+                transition: width 0.3s ease-in-out;
+            }
+
+            @media (max-width: 768px) {
+                #healthBarContainer {
+                    width: 150px;
+                    height: 15px;
+                }
+            }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-
-
-
         <canvas id="gameCanvas"></canvas>
-
-
-
+        <div id="score">0</div>
+        <div id="mobileControls">
+            <div id="joystickContainer">
+                <div id="joystick"></div>
+            </div>
+            <div id="actionButtons">
+                <button id="chargeButton" class="actionButton">蓄力</button>
+                <button id="specialButton" class="actionButton">特殊</button>
+            </div>
+        </div>
         <div id="startScreen">
             <h1>酷炫飞机大战</h1>
             <button id="startButton" class="button">开始游戏</button>
@@ -724,69 +790,54 @@
             <h2>游戏暂停</h2>
             <button id="resumeButton" class="button">继续游戏</button>
         </div>
-
-
-
         <div id="helpPanel" style="display: none;">
             <h2>游戏说明</h2>
             <div id="helpContent"></div>
             <button id="closeHelpButton" class="button">关闭</button>
         </div>
-        <div id="score">0</div>
-
-                                <!-- 在 #controlPanel 之前添加以下代码 -->
-                                <div id="settingsPanel" style="display: none;">
-                                    <div class="settings-content">
-                                        <div class="settings-scroll-area">
-                                            <h2>游戏设置</h2>
-                                            <div class="setting-group">
-                                                <label for="gameDuration">游戏时长（秒）：</label>
-                                                <input type="number" id="gameDuration" min="30" max="300" value="60">
-                                            </div>
-                                            <div class="setting-group">
-                                                <label for="initialHealth">初始生命值：</label>
-                                                <input type="number" id="initialHealth" min="50" max="200" value="100">
-                                            </div>
-                                            <div class="setting-group">
-                                                <label for="initialDifficulty">初始难度级别：</label>
-                                                <select id="initialDifficulty">
-                                                    <option value="easy">简单</option>
-                                                    <option value="medium" selected>中等</option>
-                                                    <option value="hard">困难</option>
-                                                </select>
-                                            </div>
-                                            <div class="setting-group">
-                                                <h3>可用子弹类型：</h3>
-                                                <div id="bulletTypeCheckboxes" class="checkbox-grid"></div>
-                                            </div>
-                                            <div class="setting-group">
-                                                <h3>敌方种类：</h3>
-                                                <div id="enemyTypeCheckboxes" class="checkbox-grid"></div>
-                                            </div>
-                                        </div>
-                                        <div class="setting-buttons">
-                                            <button id="saveSettingsButton" class="button">保存设置</button>
-                                            <button id="closeSettingsButton" class="button">关闭</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                
         <div id="controlPanel">
             <button id="pauseButton" class="button">暂停</button>
             <button id="helpButton" class="button">帮助</button>
         </div>
         <button id="restart-button">重新开始</button>
-
         <!-- 在 <div id="gameContainer"> 内部，添加以下代码 -->
-        <div id="mobileControls">
-            <div id="joystickContainer">
-                <div id="joystick"></div>
+        <div id="settingsPanel" style="display: none;">
+            <div class="settings-content">
+                <div class="settings-scroll-area">
+                    <h2>游戏设置</h2>
+                    <div class="setting-group">
+                        <label for="gameDuration">游戏时长（秒）：</label>
+                        <input type="number" id="gameDuration" min="30" max="300" value="60">
+                    </div>
+                    <div class="setting-group">
+                        <label for="initialHealth">初始生命值：</label>
+                        <input type="number" id="initialHealth" min="50" max="200" value="100">
+                    </div>
+                    <div class="setting-group">
+                        <label for="initialDifficulty">初始难度级别：</label>
+                        <select id="initialDifficulty">
+                            <option value="easy">简单</option>
+                            <option value="medium" selected>中等</option>
+                            <option value="hard">困难</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <h3>可用子弹类型：</h3>
+                        <div id="bulletTypeCheckboxes" class="checkbox-grid"></div>
+                    </div>
+                    <div class="setting-group">
+                        <h3>敌方种类：</h3>
+                        <div id="enemyTypeCheckboxes" class="checkbox-grid"></div>
+                    </div>
+                </div>
+                <div class="setting-buttons">
+                    <button id="saveSettingsButton" class="button">保存设置</button>
+                    <button id="closeSettingsButton" class="button">关闭</button>
+                </div>
             </div>
-            <div id="actionButtons">
-                <button id="chargeButton" class="actionButton">蓄力</button>
-                <button id="specialButton" class="actionButton">特殊</button>
-            </div>
+        </div>
+        <div id="healthBarContainer">
+            <div id="healthBar"></div>
         </div>
     </div>
     <script src="game.js"></script>
