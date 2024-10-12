@@ -698,7 +698,11 @@ namespace SpaceShooterGame {
         if (powerUpTimer > 1500) { // 每1.5秒尝试生成一个道具（原来是3秒）
             powerUpTimer = 0;
             if (Math.random() < 0.7) { // 70%的概率生成道具（原来是50%）
-                const powerUpTypes: PowerUp['type'][] = ['health', 'shield', 'speedBoost', 'spreadShot', 'laserShot', 'homingMissile', 'flamethrower'];
+                const powerUpTypes: PowerUp['type'][] = [
+                    // 'health', 'shield', 'speedBoost', 
+                    'spreadShot', 
+                    // 'laserShot', 'homingMissile', 'flamethrower'
+                ];
                 const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
                 const powerUp: PowerUp = {
                     x: Math.random() * (canvas.width - 30),
@@ -788,8 +792,15 @@ namespace SpaceShooterGame {
     function fireBullet(shooter: Player | Enemy) {
         if (shooter === player) {
             player.activeBulletTypes.forEach(bulletType => {
-                const bullet = createBullet(shooter, bulletType);
-                bullets.push(bullet);
+                switch (bulletType) {
+                    case BULLET_TYPES.SPREAD:
+                        createSpreadBullet(player);
+                        break;
+                    default:
+                        const bullet = createBullet(shooter, bulletType);
+                        bullets.push(bullet);
+                        break;
+                }
             });
         } else {
             const bullet = createBullet(shooter, 'normal');
@@ -865,6 +876,28 @@ namespace SpaceShooterGame {
 
         return nearestEnemy;
     }
+
+    // 在创建子弹的函数中（可能是 fireBullet 或类似的函数）
+function createSpreadBullet(shooter: Player) {
+    const spreadCount = 5; // 每次发射的散弹数量
+    const spreadAngle = Math.PI / 6; // 散弹的扩散角度
+
+    for (let i = 0; i < spreadCount; i++) {
+        const angle = -spreadAngle / 2 + (spreadAngle / (spreadCount - 1)) * i;
+        const bullet: Bullet = {
+            x: shooter.x + shooter.width / 2,
+            y: shooter.y,
+            width: 4,
+            height: 4,
+            speed: 10,
+            damage: 0.7,
+            angle: -Math.PI / 2 + angle, // 基础向上方向加上扩散角度
+            type: BULLET_TYPES.SPREAD,
+            isPlayerBullet: true
+        };
+        bullets.push(bullet);
+    }
+}
 
     function createFireBullet(shooter: Player) {
         const bullet: Bullet = {
@@ -2261,7 +2294,7 @@ namespace SpaceShooterGame {
                     console.log('Drawing laser sights'); // 添加日志
                     break;
                 case BULLET_TYPES.SPREAD:
-                    createSpreadIndicators();
+                    // createSpreadIndicators();
                     console.log('Drawing spread indicators'); // 添加日志
                     break;
                 case BULLET_TYPES.MISSILE:
