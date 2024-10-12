@@ -5,8 +5,8 @@ var SpaceShooterGame;
         // 'health', 'shield', 'speedBoost', 
         // 'spreadShot', 
         // 'laserShot', 
-        // 'flamethrower',
-        'homingMissile',
+        'flamethrower',
+        // 'homingMissile',
     ];
     // 全局变量声明
     var canvas;

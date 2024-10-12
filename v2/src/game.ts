@@ -75,8 +75,8 @@ namespace SpaceShooterGame {
         // 'health', 'shield', 'speedBoost', 
         // 'spreadShot', 
         // 'laserShot', 
-        // 'flamethrower',
-        'homingMissile', 
+        'flamethrower',
+        // 'homingMissile',
     ];
 
     interface GameSettings {
@@ -848,8 +848,8 @@ function createEnemy(): Enemy {
                         }
                         break;
                     case BULLET_TYPES.HOMING:
-                                            // 检查当前是否有活跃的导弹
-                    const activeHomingMissile = bullets.find(b => b.type === BULLET_TYPES.HOMING && b.isPlayerBullet);
+                        // 检查当前是否有活跃的导弹
+                        const activeHomingMissile = bullets.find(b => b.type === BULLET_TYPES.HOMING && b.isPlayerBullet);
                         if (!activeHomingMissile) {
                             const missile = createBullet(shooter, bulletType);
                             bullets.push(missile);
@@ -1204,9 +1204,9 @@ function createSpreadBullet(shooter: Player) {
     function drawStars() {
         ctx.fillStyle = '#FFF';
         stars.forEach(star => {
-            ctx.beginPath();
+                    ctx.beginPath();
             ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-            ctx.fill();
+                    ctx.fill();
             star.y += star.speed;
             if (star.y > canvas.height) {
                 star.y = 0;
@@ -2243,7 +2243,7 @@ function createSpreadBullet(shooter: Player) {
     function createEmpField() {
         ctx.strokeStyle = 'rgba(0, 191, 255, 0.5)';
         ctx.lineWidth = 2;
-        ctx.beginPath();
+                    ctx.beginPath();
         ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width, 0, Math.PI * 2);
         ctx.stroke();
     }
@@ -2293,7 +2293,7 @@ function createSpreadBullet(shooter: Player) {
         ctx.fillStyle = 'rgba(128, 0, 128, 0.2)';
         ctx.beginPath();
         ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width * 1.5, 0, Math.PI * 2);
-        ctx.fill();
+                    ctx.fill();
     }
 
     function createGravityWellEffect() {
