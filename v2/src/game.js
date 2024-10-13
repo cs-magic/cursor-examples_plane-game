@@ -1,8 +1,4 @@
 /// <reference lib="dom" />
-// 在文件顶部添加新的常量
-var FLAME_THROWER_RATE = 100; // 每100毫秒发射一次
-var FLAME_RANGE = 150; // 火焰的最大射程
-var FLAME_SPREAD = Math.PI / 6; // 火焰扩散角度（30度）
 var SpaceShooterGame;
 (function (SpaceShooterGame) {
     var powerUpTypes = [
@@ -223,7 +219,7 @@ var SpaceShooterGame;
         };
         joystickElement.style.transform = "translate(".concat(dx, "px, ").concat(dy, "px)");
     }
-    // 添加处理充能和特殊按钮函数
+    // 添���处理充能和特殊按钮函数
     function handleChargeStart(event) {
         event.preventDefault();
         // 实现充能逻辑
@@ -309,6 +305,22 @@ var SpaceShooterGame;
             burnTime: 0
         };
         return enemy;
+    }
+    function createFlameParticles(bullet) {
+        for (var i = 0; i < 3; i++) {
+            particles.push({
+                x: bullet.x,
+                y: bullet.y,
+                radius: Math.random() * 2 + 1,
+                color: "hsl(".concat(Math.random() * 60 + 15, ", 100%, 50%)"),
+                velocity: {
+                    x: (Math.random() - 0.5) * 2,
+                    y: (Math.random() - 0.5) * 2
+                },
+                alpha: 1,
+                life: 20
+            });
+        }
     }
     // 更新游戏对象
     function updateGameObjects(deltaTime) {
@@ -645,18 +657,6 @@ var SpaceShooterGame;
                             playSound('missile'); // 播放导弹发射音效
                         }
                         break;
-                    case BULLET_TYPES.FLAME:
-                        if (currentTime_1 - player.lastFlameTime >= FLAME_THROWER_RATE) {
-                            for (var i = 0; i < 5; i++) { // 发射多个火焰粒子
-                                var angle = -Math.PI / 2 + (Math.random() - 0.5) * FLAME_SPREAD;
-                                var flame = createBullet(shooter, bulletType);
-                                flame.angle = angle;
-                                bullets.push(flame);
-                            }
-                            player.lastFlameTime = currentTime_1;
-                            playSound('flame');
-                        }
-                        break;
                     // 其他子弹类型的处理...
                     default:
                         var bullet = createBullet(shooter, bulletType);
@@ -679,6 +679,7 @@ var SpaceShooterGame;
         bullet.x = shooter.x + shooter.width / 2;
         bullet.y = shooter === player ? shooter.y : shooter.y + shooter.height;
         bullet.isPlayerBullet = shooter === player;
+        bullet.range = 100;
         // 设置默认角度
         bullet.angle = shooter === player ? -Math.PI / 2 : Math.PI / 2;
         switch (bulletType) {
@@ -708,14 +709,13 @@ var SpaceShooterGame;
                 bullet.target = (_a = findNearestEnemy(bullet.x, bullet.y)) !== null && _a !== void 0 ? _a : undefined;
                 break;
             case BULLET_TYPES.FLAME:
-                bullet.width = 8;
-                bullet.height = 8;
-                bullet.speed = 8;
-                bullet.damage = 0.5; // 降低单次伤害，但会持续造成伤害
-                bullet.range = FLAME_RANGE;
-                bullet.initialX = bullet.x;
-                bullet.initialY = bullet.y;
-                bullet.alpha = 1; // 添加 alpha 属性
+                bullet.width = 10;
+                bullet.height = 20;
+                bullet.speed = 6;
+                bullet.damage = 0.5; // 持续伤害
+                bullet.range = 200; // 火焰的射程
+                bullet.burning = true;
+                bullet.burnTime = 2000; // 燃烧持续2秒
                 break;
         }
         bullet.type = bulletType;
@@ -750,24 +750,11 @@ var SpaceShooterGame;
                 damage: 0.7,
                 angle: -Math.PI / 2 + angle, // 基础向上方向加上扩散角度
                 type: BULLET_TYPES.SPREAD,
-                isPlayerBullet: true
+                isPlayerBullet: true,
+                range: 100
             };
             bullets.push(bullet);
         }
-    }
-    function createFireBullet(shooter) {
-        var bullet = {
-            x: shooter.x + shooter.width / 2,
-            y: shooter.y,
-            width: 10,
-            height: 20,
-            speed: 15,
-            damage: 2,
-            angle: -Math.PI / 2,
-            type: BULLET_TYPES.FIRE,
-            isPlayerBullet: true
-        };
-        bullets.push(bullet);
     }
     function createLaserBullet(shooter) {
         var laser = {
@@ -781,25 +768,10 @@ var SpaceShooterGame;
             type: BULLET_TYPES.LASER,
             isPlayerBullet: true,
             duration: 18, // 0.3秒 (假设60帧/秒)
-            alpha: 1 // 初始完全不透明
+            alpha: 1, // 初始完全不透明
+            range: 100
         };
         bullets.push(laser);
-    }
-    function createSpreadBullets(shooter) {
-        for (var i = -2; i <= 2; i++) {
-            var bullet = {
-                x: shooter.x + shooter.width / 2,
-                y: shooter.y,
-                width: 6,
-                height: 6,
-                speed: 18,
-                damage: 1,
-                angle: -Math.PI / 2 + i * Math.PI / 12,
-                type: BULLET_TYPES.SPREAD,
-                isPlayerBullet: true
-            };
-            bullets.push(bullet);
-        }
     }
     function createHomingBullet(shooter) {
         var bullet = {
@@ -811,35 +783,8 @@ var SpaceShooterGame;
             damage: 2,
             angle: shooter === player ? -Math.PI / 2 : Math.PI / 2,
             type: BULLET_TYPES.HOMING,
-            isPlayerBullet: shooter === player
-        };
-        bullets.push(bullet);
-    }
-    function createWaveBullet(shooter) {
-        var bullet = {
-            x: shooter.x + shooter.width / 2,
-            y: shooter.y,
-            width: 10,
-            height: 10,
-            speed: 8,
-            damage: 1.5,
-            angle: -Math.PI / 2,
-            type: BULLET_TYPES.WAVE,
-            isPlayerBullet: true
-        };
-        bullets.push(bullet);
-    }
-    function createClusterBullet(shooter) {
-        var bullet = {
-            x: shooter.x + shooter.width / 2,
-            y: shooter.y,
-            width: 12,
-            height: 12,
-            speed: 6,
-            damage: 1,
-            angle: -Math.PI / 2,
-            type: BULLET_TYPES.CLUSTER,
-            isPlayerBullet: true
+            isPlayerBullet: shooter === player,
+            range: 100
         };
         bullets.push(bullet);
     }
@@ -905,14 +850,7 @@ var SpaceShooterGame;
                     ctx.rotate(angle + Math.PI / 2);
                     break;
                 case BULLET_TYPES.FLAME:
-                    var gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, bullet.width);
-                    gradient.addColorStop(0, "rgba(255, 255, 0, ".concat(bullet.alpha * 0.8, ")"));
-                    gradient.addColorStop(0.5, "rgba(255, 128, 0, ".concat(bullet.alpha * 0.5, ")"));
-                    gradient.addColorStop(1, "rgba(255, 0, 0, ".concat(bullet.alpha * 0.1, ")"));
-                    ctx.beginPath();
-                    ctx.arc(bullet.x, bullet.y, bullet.width, 0, Math.PI * 2);
-                    ctx.fillStyle = gradient;
-                    ctx.fill();
+                    drawFlameBullet(bullet);
                     break;
                 default:
                     ctx.rotate(bullet.angle + Math.PI / 2);
@@ -920,6 +858,26 @@ var SpaceShooterGame;
             }
             ctx.restore();
         });
+    }
+    function drawFlameBullet(bullet) {
+        var gradient = ctx.createLinearGradient(0, 0, 0, bullet.height);
+        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 255, 0, 0.8)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-bullet.width / 2, bullet.height);
+        ctx.lineTo(bullet.width / 2, bullet.height);
+        ctx.closePath();
+        ctx.fill();
+        // 添加火花效果
+        for (var i = 0; i < 3; i++) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc((Math.random() - 0.5) * bullet.width, Math.random() * bullet.height, Math.random() * 2 + 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
     function spawnEnemy() {
         var enemyTypes = ['normal', 'fast', 'tough', 'small', 'large'];
@@ -1399,7 +1357,8 @@ var SpaceShooterGame;
             damage: 2,
             angle: angle,
             type: BULLET_TYPES.NORMAL,
-            isPlayerBullet: false
+            isPlayerBullet: false,
+            range: 100
         };
         bullets.push(bullet);
     }
@@ -1415,7 +1374,8 @@ var SpaceShooterGame;
             angle: Math.PI / 2,
             type: BULLET_TYPES.LASER,
             isPlayerBullet: false,
-            duration: 120
+            duration: 120,
+            range: 100
         };
         bullets.push(laser);
     }
@@ -1627,7 +1587,8 @@ var SpaceShooterGame;
             angle: Math.PI / 2,
             type: BULLET_TYPES.LASER,
             isPlayerBullet: false,
-            duration: 60
+            duration: 60,
+            range: 100
         };
         bullets.push(laser);
     }
@@ -1642,7 +1603,8 @@ var SpaceShooterGame;
             damage: 1,
             angle: 0,
             type: BULLET_TYPES.NORMAL,
-            isPlayerBullet: true
+            isPlayerBullet: true,
+            range: 100
         };
     }
     function createNewParticle() {
@@ -1770,21 +1732,11 @@ var SpaceShooterGame;
     // 添加 updateBullets 函数
     function updateBullets(deltaTime) {
         bullets = bullets.filter(function (bullet, index) {
-            var _a, _b, _c, _d, _e;
-            if (bullet.type === BULLET_TYPES.FLAME) {
-                bullet.x += Math.cos(bullet.angle) * bullet.speed * (deltaTime / 16);
-                bullet.y += Math.sin(bullet.angle) * bullet.speed * (deltaTime / 16);
-                // 检查火焰是否超出射程
-                var dx = bullet.x - ((_a = bullet.initialX) !== null && _a !== void 0 ? _a : 0);
-                var dy = bullet.y - ((_b = bullet.initialY) !== null && _b !== void 0 ? _b : 0);
-                var distanceTraveled = Math.sqrt(dx * dx + dy * dy);
-                bullet.alpha = 1 - (distanceTraveled / ((_c = bullet.range) !== null && _c !== void 0 ? _c : FLAME_RANGE));
-                return distanceTraveled <= ((_d = bullet.range) !== null && _d !== void 0 ? _d : FLAME_RANGE) && bullet.alpha > 0;
-            }
-            else if (bullet.type === BULLET_TYPES.HOMING) {
+            var _a;
+            if (bullet.type === BULLET_TYPES.HOMING) {
                 if (bullet.target && !enemies.includes(bullet.target)) {
                     // 如果目标敌人不存在，寻找新目标
-                    bullet.target = (_e = findNearestEnemy(bullet.x, bullet.y)) !== null && _e !== void 0 ? _e : undefined;
+                    bullet.target = (_a = findNearestEnemy(bullet.x, bullet.y)) !== null && _a !== void 0 ? _a : undefined;
                 }
                 if (bullet.target) {
                     var dx = bullet.target.x - bullet.x;
@@ -1801,6 +1753,15 @@ var SpaceShooterGame;
                     // 如果没有目标，直线飞行
                     bullet.y -= bullet.speed * (deltaTime / 16);
                 }
+            }
+            else if (bullet.type === BULLET_TYPES.FLAME) {
+                // 火焰弹的特殊行为
+                bullet.range -= bullet.speed * (deltaTime / 16);
+                if (bullet.range <= 0) {
+                    return false; // 移除超出射程的火焰弹
+                }
+                // 创建火焰粒子效果
+                createFlameParticles(bullet);
             }
             else {
                 bullet.x += Math.cos(bullet.angle) * bullet.speed * (deltaTime / 16);
