@@ -2,10 +2,10 @@
 var SpaceShooterGame;
 (function (SpaceShooterGame) {
     var powerUpTypes = [
-        // 'health', 'shield', 'speedBoost', 
-        // 'spreadShot', 
-        // 'laserShot', 
-        'flamethrower',
+        // 'health', 'shield', 'speedBoost',
+        // 'spreadShot',
+        // 'laserShot',
+        "flamethrower",
         // 'homingMissile',
     ];
     // 全局变量声明
@@ -27,9 +27,27 @@ var SpaceShooterGame;
     var backgroundMusicInterval;
     var currentLevel;
     var levels = [
-        { number: 1, duration: 10, enemySpawnRate: 1, bossSpawnTime: 50, requiredScore: 100 },
-        { number: 2, duration: 10, enemySpawnRate: 1.5, bossSpawnTime: 75, requiredScore: 250 },
-        { number: 3, duration: 10, enemySpawnRate: 2, bossSpawnTime: 100, requiredScore: 500 },
+        {
+            number: 1,
+            duration: 10,
+            enemySpawnRate: 1,
+            bossSpawnTime: 50,
+            requiredScore: 100,
+        },
+        {
+            number: 2,
+            duration: 10,
+            enemySpawnRate: 1.5,
+            bossSpawnTime: 75,
+            requiredScore: 250,
+        },
+        {
+            number: 3,
+            duration: 10,
+            enemySpawnRate: 2,
+            bossSpawnTime: 100,
+            requiredScore: 500,
+        },
         // 添加更多关卡...
     ];
     var isBossSpawned = false;
@@ -37,29 +55,29 @@ var SpaceShooterGame;
     var gameSettings = {
         gameDuration: 60,
         initialHealth: 100,
-        initialDifficulty: 'medium',
-        bulletTypes: ['normal'],
-        enemyTypes: ['normal'],
-        difficulty: 'medium',
+        initialDifficulty: "medium",
+        bulletTypes: ["normal"],
+        enemyTypes: ["normal"],
+        difficulty: "medium",
         soundVolume: 0.5,
-        musicVolume: 0.5
+        musicVolume: 0.5,
     };
     // 常量
     var BULLET_TYPES = {
-        NORMAL: 'normal',
-        SPREAD: 'spread',
-        LASER: 'laser',
-        HOMING: 'homing',
-        FLAME: 'flame'
+        NORMAL: "normal",
+        SPREAD: "spread",
+        LASER: "laser",
+        HOMING: "homing",
+        FLAME: "flame",
     };
-    var ENEMY_TYPES = ['normal', 'fast', 'tough', 'boss'];
+    var ENEMY_TYPES = ["normal", "fast", "tough", "boss"];
     // 频相关
     var audioContext;
     var masterGainNode;
     var backgroundMusicSource = null;
     var soundEffects = {};
     // 触摸控制相关
-    var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    var isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     var joystickActive = false;
     var joystickPosition = { x: 0, y: 0 };
     // 添加键盘制
@@ -68,7 +86,7 @@ var SpaceShooterGame;
         ArrowRight: false,
         ArrowUp: false,
         ArrowDown: false,
-        ' ': false // 空格键,用于射击
+        " ": false, // 空格键,用于射击
     };
     // 添加星星数组
     var stars = [];
@@ -77,36 +95,36 @@ var SpaceShooterGame;
     // 在全局变量声明部分添加
     var achievements = [
         {
-            id: 'firstKill',
-            name: '初次击杀',
-            description: '击败你的第一个敌人',
+            id: "firstKill",
+            name: "初次击杀",
+            description: "击败你的第一个敌人",
             isUnlocked: false,
             progress: 0,
-            maxProgress: 1
+            maxProgress: 1,
         },
         {
-            id: 'sharpshooter',
-            name: '神射手',
-            description: '连续击中10个敌人',
+            id: "sharpshooter",
+            name: "神射手",
+            description: "连续击中10个敌人",
             isUnlocked: false,
             progress: 0,
-            maxProgress: 10
+            maxProgress: 10,
         },
         {
-            id: 'survivor',
-            name: '生存专家',
-            description: '在一局游戏中存活5分钟',
+            id: "survivor",
+            name: "生存专家",
+            description: "在一局游戏中存活5分钟",
             isUnlocked: false,
             progress: 0,
-            maxProgress: 300
-        }
+            maxProgress: 300,
+        },
     ];
     // 在全局变量明部分添加
     var gameStats = {
         enemiesDestroyed: 0,
         bulletsFired: 0,
         powerUpsCollected: 0,
-        timePlayedSeconds: 0
+        timePlayedSeconds: 0,
     };
     // 在namespace的开头添加以下变量声明
     var joystickElement;
@@ -117,11 +135,11 @@ var SpaceShooterGame;
     var bgmAudio;
     // 游戏初始化函数
     function initGame() {
-        canvas = document.getElementById('gameCanvas');
-        ctx = canvas.getContext('2d');
+        canvas = document.getElementById("gameCanvas");
+        ctx = canvas.getContext("2d");
         // 设置画布大小
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener("resize", resizeCanvas);
         lastEnemySpawnTime = 0;
         // 初始化玩家
         player = {
@@ -142,25 +160,25 @@ var SpaceShooterGame;
             dx: 0,
             dy: 0,
             invincible: false,
-            activeBulletTypes: new Set(['normal']),
+            activeBulletTypes: new Set(["normal"]),
             bulletDurations: {},
             laserCooldown: 0,
             lastHomingMissileTime: 0,
             lastFlameTime: 0,
         };
         // 初始化移动控制元素
-        joystickElement = document.getElementById('joystick');
-        joystickContainerElement = document.getElementById('joystickContainer');
-        chargeButtonElement = document.getElementById('chargeButton');
-        specialButtonElement = document.getElementById('specialButton');
+        joystickElement = document.getElementById("joystick");
+        joystickContainerElement = document.getElementById("joystickContainer");
+        chargeButtonElement = document.getElementById("chargeButton");
+        specialButtonElement = document.getElementById("specialButton");
         // 设置触摸事件监听器
         setupTouchListeners();
         // 隐藏所有屏幕，只示开始屏幕
-        document.getElementById('startScreen').style.display = 'flex';
-        document.getElementById('endScreen').style.display = 'none';
-        document.getElementById('victoryScreen').style.display = 'none';
-        document.getElementById('pauseScreen').style.display = 'none';
-        document.getElementById('mobileControls').style.display = 'none';
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("endScreen").style.display = "none";
+        document.getElementById("victoryScreen").style.display = "none";
+        document.getElementById("pauseScreen").style.display = "none";
+        document.getElementById("mobileControls").style.display = "none";
     }
     SpaceShooterGame.initGame = initGame;
     // 添加 resizeCanvas 函数
@@ -175,15 +193,15 @@ var SpaceShooterGame;
     }
     // 添加setupTouchListeners函数
     function setupTouchListeners() {
-        joystickContainerElement.addEventListener('touchstart', handleJoystickStart, false);
-        joystickContainerElement.addEventListener('touchmove', handleJoystickMove, false);
-        joystickContainerElement.addEventListener('touchend', handleJoystickEnd, false);
-        chargeButtonElement.addEventListener('touchstart', handleChargeStart, false);
-        chargeButtonElement.addEventListener('touchend', handleChargeEnd, false);
-        specialButtonElement.addEventListener('touchstart', handleSpecialStart, false);
-        specialButtonElement.addEventListener('touchend', handleSpecialEnd, false);
+        joystickContainerElement.addEventListener("touchstart", handleJoystickStart, false);
+        joystickContainerElement.addEventListener("touchmove", handleJoystickMove, false);
+        joystickContainerElement.addEventListener("touchend", handleJoystickEnd, false);
+        chargeButtonElement.addEventListener("touchstart", handleChargeStart, false);
+        chargeButtonElement.addEventListener("touchend", handleChargeEnd, false);
+        specialButtonElement.addEventListener("touchstart", handleSpecialStart, false);
+        specialButtonElement.addEventListener("touchend", handleSpecialEnd, false);
     }
-    // 添加处理摇杆触摸的函数
+    // 添处理摇杆触摸的函数
     function handleJoystickStart(event) {
         event.preventDefault();
         joystickActive = true;
@@ -199,7 +217,7 @@ var SpaceShooterGame;
         event.preventDefault();
         joystickActive = false;
         joystickPosition = { x: 0, y: 0 };
-        joystickElement.style.transform = 'translate(-50%, -50%)';
+        joystickElement.style.transform = "translate(-50%, -50%)";
     }
     function updateJoystickPosition(touch) {
         var rect = joystickContainerElement.getBoundingClientRect();
@@ -215,11 +233,11 @@ var SpaceShooterGame;
         }
         joystickPosition = {
             x: dx / maxDistance,
-            y: dy / maxDistance
+            y: dy / maxDistance,
         };
         joystickElement.style.transform = "translate(".concat(dx, "px, ").concat(dy, "px)");
     }
-    // 添���处理充能和特殊按钮函数
+    // 添处理充能和特殊按钮函数
     function handleChargeStart(event) {
         event.preventDefault();
         // 实现充能逻辑
@@ -251,7 +269,8 @@ var SpaceShooterGame;
         // 更新游戏时间
         gameTime += deltaTime / 1000;
         // 检查是否需要进入下一关
-        if (gameTime >= currentLevel.duration || player.score >= currentLevel.requiredScore) {
+        if (gameTime >= currentLevel.duration ||
+            player.score >= currentLevel.requiredScore) {
             if (currentLevel.number < levels.length) {
                 startNextLevel();
             }
@@ -260,7 +279,8 @@ var SpaceShooterGame;
             }
         }
         // 生成敌人
-        if (currentTime - lastEnemySpawnTime > 1000) { // 每秒生成一个敌人
+        if (currentTime - lastEnemySpawnTime > 1000) {
+            // 每秒生成一个敌人
             enemies.push(createEnemy());
             lastEnemySpawnTime = currentTime;
         }
@@ -296,29 +316,31 @@ var SpaceShooterGame;
             height: 40,
             speed: 2 + Math.random() * 2,
             health: 3,
-            color: '#FF0000',
-            type: 'normal',
+            color: "#FF0000",
+            type: "normal",
             lastShot: 0,
             shootInterval: 1000,
-            movePattern: 'straight',
+            movePattern: "straight",
             burning: false,
-            burnTime: 0
+            burnTime: 0,
         };
         return enemy;
     }
     function createFlameParticles(bullet) {
-        for (var i = 0; i < 3; i++) {
+        var particleCount = 5;
+        for (var i = 0; i < particleCount; i++) {
             particles.push({
                 x: bullet.x,
                 y: bullet.y,
-                radius: Math.random() * 2 + 1,
-                color: "hsl(".concat(Math.random() * 60 + 15, ", 100%, 50%)"),
+                radius: Math.random() * 3 + 1,
+                color: "hsl(".concat(Math.random() * 30 + 15, ", 100%, ").concat(Math.random() * 50 + 50, "%)"),
                 velocity: {
                     x: (Math.random() - 0.5) * 2,
-                    y: (Math.random() - 0.5) * 2
+                    y: (Math.random() - 0.5) * 2,
                 },
                 alpha: 1,
-                life: 20
+                life: Math.random() * 20 + 10,
+                shrink: 0.95,
             });
         }
     }
@@ -338,7 +360,7 @@ var SpaceShooterGame;
         ctx.save();
         applyScreenShake();
         // 清屏
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         // 绘制游戏对象
         drawStars();
@@ -356,12 +378,13 @@ var SpaceShooterGame;
     }
     // 添加 updateScore 函数
     function updateScore() {
-        var scoreElement = document.getElementById('score');
+        var scoreElement = document.getElementById("score");
         if (scoreElement) {
             scoreElement.textContent = "\u5206\u6570: ".concat(player.score);
         }
     }
     var lastLaserTime = 0;
+    var lastFrameTime = 0;
     // 更新玩家位置
     function updatePlayer(deltaTime) {
         if (isTouchDevice && joystickActive) {
@@ -385,31 +408,9 @@ var SpaceShooterGame;
         // 确保玩家不会出屏幕
         player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
         player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-        // 更新激光冷却时间
-        if (player.laserCooldown > 0) {
-            player.laserCooldown -= deltaTime;
-        }
-        // 激光发射逻辑
-        if (player.activeBulletTypes.has(BULLET_TYPES.LASER)) {
-            var currentTime = Date.now();
-            if (currentTime - lastLaserTime >= 500) { // 每0.5秒
-                createLaserBullet(player);
-                lastLaserTime = currentTime;
-            }
-        }
         // 添加自动射击
         if (player.shootCooldown > 0) {
             player.shootCooldown -= deltaTime;
-        }
-        else {
-            fireBullet(player);
-            player.shootCooldown = player.shootInterval;
-        }
-    }
-    // 玩家自动击
-    function playerAutoShoot() {
-        if (player.shootCooldown > 0) {
-            player.shootCooldown -= 16; // 假设游戏以60FPS运行，帧约16毫秒
         }
         else {
             fireBullet(player);
@@ -421,7 +422,7 @@ var SpaceShooterGame;
         ctx.save();
         ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
         // 主
-        ctx.fillStyle = '#4A90E2';
+        ctx.fillStyle = "#4A90E2";
         ctx.beginPath();
         ctx.moveTo(0, -player.height / 2);
         ctx.lineTo(player.width / 2, player.height / 2);
@@ -429,7 +430,7 @@ var SpaceShooterGame;
         ctx.closePath();
         ctx.fill();
         // 机翼
-        ctx.fillStyle = '#5AC8FA';
+        ctx.fillStyle = "#5AC8FA";
         ctx.beginPath();
         ctx.moveTo(player.width / 2, player.height / 4);
         ctx.lineTo(player.width, player.height / 2);
@@ -443,7 +444,7 @@ var SpaceShooterGame;
         ctx.closePath();
         ctx.fill();
         // 驾驶舱
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
         ctx.ellipse(0, 0, player.width / 6, player.height / 4, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -512,7 +513,7 @@ var SpaceShooterGame;
                 console.log("Player collected power-up:", powerUp.type); // 添加日志
                 applyPowerUp(powerUp);
                 powerUps.splice(index, 1);
-                playSound('powerUp');
+                playSound("powerUp");
             }
         });
     }
@@ -528,7 +529,7 @@ var SpaceShooterGame;
     }
     function drawShield() {
         if (player.shield > 0) {
-            ctx.strokeStyle = '#5AC8FA';
+            ctx.strokeStyle = "#5AC8FA";
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2 + 10, 0, Math.PI * 2);
@@ -536,12 +537,12 @@ var SpaceShooterGame;
         }
     }
     function drawSpecialWeaponCharge() {
-        ctx.fillStyle = '#FF9500';
+        ctx.fillStyle = "#FF9500";
         ctx.fillRect(10, 90, player.specialWeapon * 2, 10);
     }
     function updateAndDrawGameInfo() {
-        ctx.fillStyle = '#FFF';
-        ctx.font = '20px Arial';
+        ctx.fillStyle = "#FFF";
+        ctx.font = "20px Arial";
         ctx.fillText("\u5173\u5361: ".concat(level), 10, 30);
         ctx.fillText("\u751F\u547D\u503C: ".concat(player.health, "/").concat(player.maxHealth), 10, 60);
         ctx.fillText("\u65F6\u95F4: ".concat(Math.floor(gameTime)), 10, 90);
@@ -554,9 +555,11 @@ var SpaceShooterGame;
     }
     function generatePowerUps(deltaTime) {
         powerUpTimer += deltaTime;
-        if (powerUpTimer > 1500) { // 每1.5秒尝试生成一个道具（原来是3秒）
+        if (powerUpTimer > 1500) {
+            // 每1.5秒尝试生成一个道具（原来是3秒）
             powerUpTimer = 0;
-            if (Math.random() < 0.7) { // 70%的概率生成道具（原来是50%）
+            if (Math.random() < 0.7) {
+                // 70%的概率生成道具（原来是50%）
                 var type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
                 var powerUp = {
                     x: Math.random() * (canvas.width - 30),
@@ -565,7 +568,7 @@ var SpaceShooterGame;
                     height: 30,
                     type: type,
                     speed: 2,
-                    icon: getPowerUpIcon(type)
+                    icon: getPowerUpIcon(type),
                 };
                 powerUps.push(powerUp);
                 console.log("Power-up generated:", type);
@@ -574,13 +577,20 @@ var SpaceShooterGame;
     }
     function getPowerUpIcon(type) {
         switch (type) {
-            case 'health': return '❤️';
-            case 'shield': return '🛡️';
-            case 'speedBoost': return '⚡';
-            case 'spreadShot': return '🎇';
-            case 'laserShot': return '📡';
-            case 'homingMissile': return '🚀';
-            case 'flamethrower': return '🔥';
+            case "health":
+                return "❤️";
+            case "shield":
+                return "🛡️";
+            case "speedBoost":
+                return "⚡";
+            case "spreadShot":
+                return "🎇";
+            case "laserShot":
+                return "📡";
+            case "homingMissile":
+                return "🚀";
+            case "flamethrower":
+                return "🔥";
         }
     }
     function drawPowerUps() {
@@ -589,23 +599,26 @@ var SpaceShooterGame;
             ctx.fillStyle = getPowerUpColor(powerUp.type);
             ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
             // 添加边框
-            ctx.strokeStyle = 'white';
+            ctx.strokeStyle = "white";
             ctx.lineWidth = 2;
             ctx.strokeRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
             // 添加图标或文字
-            ctx.fillStyle = 'white';
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
             ctx.fillText(powerUp.icon, powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2);
             ctx.restore();
         });
     }
     function getPowerUpColor(type) {
         switch (type) {
-            case 'shield': return '#5AC8FA';
-            case 'health': return '#4CD964';
-            default: return '#FF9500';
+            case "shield":
+                return "#5AC8FA";
+            case "health":
+                return "#4CD964";
+            default:
+                return "#FF9500";
         }
     }
     function createExplosion(x, y, size) {
@@ -615,13 +628,21 @@ var SpaceShooterGame;
             y: y,
             radius: 1,
             maxRadius: size,
-            alpha: 1
+            alpha: 1,
         });
-        playSound('explosion');
+        playSound("explosion");
         createExplosionParticles(x, y, size);
     }
     function spawnPowerUp(x, y) {
-        var powerUpTypes = ['health', 'shield', 'speedBoost', 'spreadShot', 'laserShot', 'homingMissile', 'flamethrower'];
+        var powerUpTypes = [
+            "health",
+            "shield",
+            "speedBoost",
+            "spreadShot",
+            "laserShot",
+            "homingMissile",
+            "flamethrower",
+        ];
         var type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
         powerUps.push({
             x: x,
@@ -630,7 +651,7 @@ var SpaceShooterGame;
             height: 30,
             type: type,
             speed: 2,
-            icon: getPowerUpIcon(type)
+            icon: getPowerUpIcon(type),
         });
     }
     // 修改 fireBullet 函数
@@ -643,7 +664,8 @@ var SpaceShooterGame;
                         createSpreadBullet(player);
                         break;
                     case BULLET_TYPES.LASER:
-                        if (currentTime_1 - lastLaserTime >= 500) { // 每0.5秒
+                        if (currentTime_1 - lastLaserTime >= 500) {
+                            // 每0.5秒
                             createLaserBullet(player);
                             lastLaserTime = currentTime_1;
                         }
@@ -654,7 +676,14 @@ var SpaceShooterGame;
                         if (!activeHomingMissile) {
                             var missile = createBullet(shooter, bulletType);
                             bullets.push(missile);
-                            playSound('missile'); // 播放导弹发射音效
+                            playSound("missile"); // 播放导弹发射音效
+                        }
+                        break;
+                    case BULLET_TYPES.FLAME:
+                        if (currentTime_1 - player.lastFlameTime >= 500) {
+                            // 每2秒发射一次
+                            createFlameSpread(player);
+                            player.lastFlameTime = currentTime_1;
                         }
                         break;
                     // 其他子弹类型的处理...
@@ -666,10 +695,10 @@ var SpaceShooterGame;
             });
         }
         else {
-            var bullet = createBullet(shooter, 'normal');
+            var bullet = createBullet(shooter, "normal");
             bullets.push(bullet);
         }
-        playSound('shoot');
+        playSound("shoot");
         gameStats.bulletsFired++;
     }
     // 修改 createBullet 函数
@@ -709,13 +738,13 @@ var SpaceShooterGame;
                 bullet.target = (_a = findNearestEnemy(bullet.x, bullet.y)) !== null && _a !== void 0 ? _a : undefined;
                 break;
             case BULLET_TYPES.FLAME:
-                bullet.width = 10;
+                bullet.width = 20;
                 bullet.height = 20;
                 bullet.speed = 6;
                 bullet.damage = 0.5; // 持续伤害
                 bullet.range = 200; // 火焰的射程
-                bullet.burning = true;
-                bullet.burnTime = 2000; // 燃烧持续2秒
+                bullet.angle = -Math.PI / 2; // 向上的基准角度
+                bullet.spreadAngle = Math.PI / 3; // 120度的扇形区域
                 break;
         }
         bullet.type = bulletType;
@@ -751,7 +780,7 @@ var SpaceShooterGame;
                 angle: -Math.PI / 2 + angle, // 基础向上方向加上扩散角度
                 type: BULLET_TYPES.SPREAD,
                 isPlayerBullet: true,
-                range: 100
+                range: 100,
             };
             bullets.push(bullet);
         }
@@ -769,7 +798,7 @@ var SpaceShooterGame;
             isPlayerBullet: true,
             duration: 18, // 0.3秒 (假设60帧/秒)
             alpha: 1, // 初始完全不透明
-            range: 100
+            range: 100,
         };
         bullets.push(laser);
     }
@@ -784,7 +813,7 @@ var SpaceShooterGame;
             angle: shooter === player ? -Math.PI / 2 : Math.PI / 2,
             type: BULLET_TYPES.HOMING,
             isPlayerBullet: shooter === player,
-            range: 100
+            range: 100,
         };
         bullets.push(bullet);
     }
@@ -795,11 +824,11 @@ var SpaceShooterGame;
             ctx.translate(bullet.x, bullet.y);
             switch (bullet.type) {
                 case BULLET_TYPES.NORMAL:
-                    ctx.fillStyle = bullet.isPlayerBullet ? '#5AC8FA' : '#FF3B30';
+                    ctx.fillStyle = bullet.isPlayerBullet ? "#5AC8FA" : "#FF3B30";
                     ctx.fillRect(-bullet.width / 2, -bullet.height / 2, bullet.width, bullet.height);
                     break;
                 case BULLET_TYPES.SPREAD:
-                    ctx.fillStyle = '#FFD700';
+                    ctx.fillStyle = "#FFD700";
                     ctx.beginPath();
                     ctx.arc(0, 0, bullet.width / 2, 0, Math.PI * 2);
                     ctx.fill();
@@ -810,7 +839,7 @@ var SpaceShooterGame;
                     return; // 提前返回，避免执行后面的 ctx.restore()
                 case BULLET_TYPES.HOMING:
                     // 绘制火箭主体
-                    ctx.fillStyle = '#FF9500';
+                    ctx.fillStyle = "#FF9500";
                     ctx.beginPath();
                     ctx.moveTo(0, -bullet.height / 2);
                     ctx.lineTo(bullet.width / 2, bullet.height / 2);
@@ -818,7 +847,7 @@ var SpaceShooterGame;
                     ctx.closePath();
                     ctx.fill();
                     // 绘制火箭尾翼
-                    ctx.fillStyle = '#FF3B30';
+                    ctx.fillStyle = "#FF3B30";
                     ctx.beginPath();
                     ctx.moveTo(bullet.width / 2, bullet.height / 2);
                     ctx.lineTo(bullet.width, bullet.height / 4);
@@ -832,7 +861,7 @@ var SpaceShooterGame;
                     ctx.closePath();
                     ctx.fill();
                     // 绘制火箭推进器火焰
-                    ctx.fillStyle = '#FFF700';
+                    ctx.fillStyle = "#FFF700";
                     ctx.beginPath();
                     ctx.moveTo(bullet.width / 4, bullet.height / 2);
                     ctx.lineTo(0, bullet.height);
@@ -860,27 +889,33 @@ var SpaceShooterGame;
         });
     }
     function drawFlameBullet(bullet) {
-        var gradient = ctx.createLinearGradient(0, 0, 0, bullet.height);
-        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.8)');
-        gradient.addColorStop(1, 'rgba(255, 255, 0, 0.8)');
+        ctx.fillStyle = "orange";
+        ctx.beginPath();
+        ctx.arc(0, 0, bullet.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+        // 添加火焰尾迹
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        var gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, bullet.width * 2);
+        gradient.addColorStop(0, "yellow");
+        gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(-bullet.width / 2, bullet.height);
-        ctx.lineTo(bullet.width / 2, bullet.height);
+        ctx.lineTo(-bullet.width, bullet.height * 2);
+        ctx.lineTo(bullet.width, bullet.height * 2);
         ctx.closePath();
         ctx.fill();
-        // 添加火花效果
-        for (var i = 0; i < 3; i++) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.beginPath();
-            ctx.arc((Math.random() - 0.5) * bullet.width, Math.random() * bullet.height, Math.random() * 2 + 1, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        ctx.restore();
     }
     function spawnEnemy() {
-        var enemyTypes = ['normal', 'fast', 'tough', 'small', 'large'];
+        var enemyTypes = [
+            "normal",
+            "fast",
+            "tough",
+            "small",
+            "large",
+        ];
         var enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
         var enemy = {
             x: Math.random() * (canvas.width - 60),
@@ -889,36 +924,36 @@ var SpaceShooterGame;
             height: 50,
             speed: 2,
             health: 3, // 增加敌人的生命值
-            color: '#FF3B30',
+            color: "#FF3B30",
             type: enemyType,
             lastShot: 0,
             shootInterval: 2000 + Math.random() * 2000, // 2-4秒间隔
-            movePattern: Math.random() < 0.3 ? 'zigzag' : 'straight', // 30%概率zigzag移动,
+            movePattern: Math.random() < 0.3 ? "zigzag" : "straight", // 30%概率zigzag移动,
             burning: false,
-            burnTime: 0
+            burnTime: 0,
         };
         switch (enemyType) {
-            case 'large':
+            case "large":
                 enemy.width = 70;
                 enemy.height = 70;
                 enemy.health = 2;
-                enemy.color = '#FF9500';
+                enemy.color = "#FF9500";
                 break;
-            case 'fast':
+            case "fast":
                 enemy.speed = 4;
-                enemy.color = '#5AC8FA';
+                enemy.color = "#5AC8FA";
                 break;
-            case 'tough':
+            case "tough":
                 enemy.health = 3;
-                enemy.color = '#4A90E2';
+                enemy.color = "#4A90E2";
                 break;
-            case 'small':
+            case "small":
                 enemy.width = 30;
                 enemy.height = 30;
                 enemy.speed = 3;
-                enemy.color = '#FF2D55';
+                enemy.color = "#FF2D55";
                 break;
-            case 'normal':
+            case "normal":
             default:
                 // 保持默认值
                 break;
@@ -934,12 +969,12 @@ var SpaceShooterGame;
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
                 radius: Math.random() * 2,
-                speed: Math.random() * 3 + 1
+                speed: Math.random() * 3 + 1,
             });
         }
     }
     function drawStars() {
-        ctx.fillStyle = '#FFF';
+        ctx.fillStyle = "#FFF";
         stars.forEach(function (star) {
             ctx.beginPath();
             ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
@@ -961,12 +996,12 @@ var SpaceShooterGame;
                     enemy.burning = false;
                 }
             }
-            if (enemy.type === 'boss') {
+            if (enemy.type === "boss") {
                 updateBoss(enemy, deltaTime);
             }
             else {
                 // 移动敌机
-                if (enemy.movePattern === 'zigzag') {
+                if (enemy.movePattern === "zigzag") {
                     enemy.x += Math.sin(enemy.y * 0.1) * 2; // 左右摆动
                 }
                 enemy.y += enemy.speed * (deltaTime / 16);
@@ -1012,21 +1047,27 @@ var SpaceShooterGame;
         ctx.closePath();
         ctx.fill();
         // 绘制驾驶舱
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
         ctx.arc(0, enemy.height / 6, enemy.width / 6, 0, Math.PI * 2);
         ctx.fill();
         // 绘制燃烧效果
         if (enemy.burning) {
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
             ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         }
         ctx.restore();
     }
     // 添加一个辅助函数来调亮颜色
     function lightenColor(color, percent) {
-        var num = parseInt(color.replace("#", ""), 16), amt = Math.round(2.55 * percent), R = (num >> 16) + amt, G = (num >> 8 & 0x00FF) + amt, B = (num & 0x0000FF) + amt;
-        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        var num = parseInt(color.replace("#", ""), 16), amt = Math.round(2.55 * percent), R = (num >> 16) + amt, G = ((num >> 8) & 0x00ff) + amt, B = (num & 0x0000ff) + amt;
+        return ("#" +
+            (0x1000000 +
+                (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+                (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+                (B < 255 ? (B < 1 ? 0 : B) : 255))
+                .toString(16)
+                .slice(1));
     }
     function checkPlayerEnemyCollision() {
         enemies.forEach(function (enemy, index) {
@@ -1040,13 +1081,13 @@ var SpaceShooterGame;
                     enemies.splice(index, 1);
                     player.shield -= 20;
                     createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
-                    playSound('explosion');
+                    playSound("explosion");
                 }
                 else {
                     // 如果没有护盾，减少玩家生命值
                     player.health -= 20;
                     createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
-                    playSound('playerHit');
+                    playSound("playerHit");
                 }
                 // 检查玩家是否被击败
                 if (player.health <= 0) {
@@ -1059,27 +1100,29 @@ var SpaceShooterGame;
         gameRunning = false;
         clearInterval(enemySpawnInterval);
         stopBGM();
-        playSound('gameOver');
-        document.getElementById('endScreen').style.display = 'flex';
-        document.getElementById('mobileControls').style.display = 'none';
-        document.getElementById('finalScore').textContent = "\u6700\u7EC8\u5206: ".concat(player.score);
+        playSound("gameOver");
+        document.getElementById("endScreen").style.display = "flex";
+        document.getElementById("mobileControls").style.display = "none";
+        document.getElementById("finalScore").textContent = "\u6700\u7EC8\u5206: ".concat(player.score);
     }
     function initAudio() {
         if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext = new (window.AudioContext ||
+                window.webkitAudioContext)();
             masterGainNode = audioContext.createGain();
             masterGainNode.connect(audioContext.destination);
             masterGainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
         }
         // 加载音效
-        loadSound('shoot', 'assets/shoot.mp3');
-        loadSound('explosion', 'assets/explosion.mp3');
-        loadSound('powerUp', 'assets/powerup.wav');
-        loadSound('gameOver', 'assets/game-over.wav');
-        loadSound('victory', 'assets/victory.wav');
-        loadSound('missile', 'assets/missile.wav');
+        loadSound("shoot", "assets/shoot.mp3");
+        loadSound("explosion", "assets/explosion.mp3");
+        loadSound("powerUp", "assets/powerup.wav");
+        loadSound("gameOver", "assets/game-over.wav");
+        loadSound("victory", "assets/victory.wav");
+        loadSound("missile", "assets/missile.wav");
+        loadSound("flame", "assets/flame.wav");
         // 初始化背景音乐
-        bgmAudio = new Audio('assets/background.mp3');
+        bgmAudio = new Audio("assets/background.mp3");
         bgmAudio.loop = true;
         bgmAudio.volume = 0.3; // 设置初始音量
     }
@@ -1090,7 +1133,7 @@ var SpaceShooterGame;
             .then(function (audioBuffer) {
             soundEffects[name] = audioBuffer;
         })
-            .catch(function (error) { return console.error('Error loading sound:', error); });
+            .catch(function (error) { return console.error("Error loading sound:", error); });
     }
     function playSound(type) {
         if (soundEffects[type]) {
@@ -1100,16 +1143,16 @@ var SpaceShooterGame;
             var gainNode = audioContext.createGain();
             // 根据音效类型设置不同的音量
             switch (type) {
-                case 'shoot':
+                case "shoot":
                     gainNode.gain.setValueAtTime(0.2, audioContext.currentTime); // 将普通射击音降低到 20%
                     break;
-                case 'powerUp':
+                case "powerUp":
                     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // 将 powerUp 音效降低到 30%
                     break;
-                case 'explosion':
+                case "explosion":
                     gainNode.gain.setValueAtTime(0.8, audioContext.currentTime); // 爆炸音效保持较大音量
                     break;
-                case 'playerHit':
+                case "playerHit":
                     gainNode.gain.setValueAtTime(0.6, audioContext.currentTime); // 玩家受击音效稍微降低
                     break;
                 default:
@@ -1123,7 +1166,7 @@ var SpaceShooterGame;
     }
     // 添加播放背景音乐的函数
     function playBGM() {
-        if (audioContext.state === 'suspended') {
+        if (audioContext.state === "suspended") {
             audioContext.resume();
         }
         bgmAudio.play();
@@ -1152,16 +1195,16 @@ var SpaceShooterGame;
         powerUpTimer = 0;
         currentLevel = levels[0];
         // 隐藏开始屏幕，显示游戏画布和控制器
-        document.getElementById('startScreen').style.display = 'none';
-        canvas.style.display = 'block';
+        document.getElementById("startScreen").style.display = "none";
+        canvas.style.display = "block";
         // 只在触设备上显示动控制器
         if (isTouchDevice) {
-            document.getElementById('mobileControls').style.display = 'flex';
+            document.getElementById("mobileControls").style.display = "flex";
         }
         else {
-            document.getElementById('mobileControls').style.display = 'none';
+            document.getElementById("mobileControls").style.display = "none";
         }
-        document.getElementById('score').style.display = 'block';
+        document.getElementById("score").style.display = "block";
         // 初始化游元素
         createStars();
         clearInterval(enemySpawnInterval);
@@ -1178,21 +1221,25 @@ var SpaceShooterGame;
     // 获取难度值
     function getDifficultyValue(difficulty) {
         switch (difficulty) {
-            case 'easy': return 1;
-            case 'medium': return 1.5;
-            case 'hard': return 2;
-            default: return 1.5;
+            case "easy":
+                return 1;
+            case "medium":
+                return 1.5;
+            case "hard":
+                return 2;
+            default:
+                return 1.5;
         }
     }
     // 在这里添加其他游戏函数...
     function startNextLevel() {
         if (!currentLevel) {
-            console.error('Current level is not initialized');
+            console.error("Current level is not initialized");
             return;
         }
         var nextLevelIndex = currentLevel.number + 1;
         if (nextLevelIndex >= levels.length) {
-            console.log('Game completed! No more levels.');
+            console.log("Game completed! No more levels.");
             return;
         }
         currentLevel = levels[nextLevelIndex];
@@ -1205,9 +1252,9 @@ var SpaceShooterGame;
         gameRunning = false;
         clearInterval(enemySpawnInterval);
         stopBGM();
-        playSound('victory');
-        document.getElementById('victoryScreen').style.display = 'flex';
-        document.getElementById('finalScore').textContent = "\u6700\u7EC8\u5206\u6570: ".concat(player.score);
+        playSound("victory");
+        document.getElementById("victoryScreen").style.display = "flex";
+        document.getElementById("finalScore").textContent = "\u6700\u7EC8\u5206\u6570: ".concat(player.score);
     }
     function spawnBoss() {
         var boss = {
@@ -1218,16 +1265,16 @@ var SpaceShooterGame;
             speed: 1,
             health: 100,
             maxHealth: 100,
-            color: '#FF0000',
-            type: 'boss',
+            color: "#FF0000",
+            type: "boss",
             lastShot: 0,
             shootInterval: 1000,
-            movePattern: 'complex',
+            movePattern: "complex",
             phase: 1,
-            attackPattern: 'normal',
+            attackPattern: "normal",
             specialAttackCooldown: 0,
             burning: false,
-            burnTime: 0
+            burnTime: 0,
         };
         enemies.push(boss);
         isBossSpawned = true;
@@ -1239,13 +1286,13 @@ var SpaceShooterGame;
         // Boss的攻击模式
         if (Date.now() - boss.lastShot > boss.shootInterval) {
             switch (boss.attackPattern) {
-                case 'normal':
+                case "normal":
                     fireBullet(boss);
                     break;
-                case 'spread':
+                case "spread":
                     fireSpreadBullets(boss);
                     break;
-                case 'laser':
+                case "laser":
                     fireLaser(boss);
                     break;
             }
@@ -1260,12 +1307,12 @@ var SpaceShooterGame;
         // Boss的阶段变化
         if (boss.health < boss.maxHealth * 0.5 && boss.phase === 1) {
             boss.phase = 2;
-            boss.attackPattern = 'spread';
+            boss.attackPattern = "spread";
             boss.shootInterval = 800;
         }
         else if (boss.health < boss.maxHealth * 0.25 && boss.phase === 2) {
             boss.phase = 3;
-            boss.attackPattern = 'laser';
+            boss.attackPattern = "laser";
             boss.shootInterval = 1500;
         }
     }
@@ -1273,9 +1320,9 @@ var SpaceShooterGame;
         ctx.fillStyle = boss.color;
         ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
         // 绘制Boss血条
-        ctx.fillStyle = '#FF0000';
+        ctx.fillStyle = "#FF0000";
         ctx.fillRect(boss.x, boss.y - 20, boss.width, 10);
-        ctx.fillStyle = '#00FF00';
+        ctx.fillStyle = "#00FF00";
         ctx.fillRect(boss.x, boss.y - 20, boss.width * (boss.health / boss.maxHealth), 10);
     }
     // 添加新的函
@@ -1287,15 +1334,17 @@ var SpaceShooterGame;
         else {
             bgmAudio.play();
         }
-        document.getElementById('pauseButton').textContent = isPaused ? '继续' : '暂停';
+        document.getElementById("pauseButton").textContent = isPaused
+            ? "继续"
+            : "暂停";
     }
     SpaceShooterGame.togglePause = togglePause;
     // 添加的函
     function saveSettings() {
-        localStorage.setItem('gameSettings', JSON.stringify(gameSettings));
+        localStorage.setItem("gameSettings", JSON.stringify(gameSettings));
     }
     function loadSettings() {
-        var savedSettings = localStorage.getItem('gameSettings');
+        var savedSettings = localStorage.getItem("gameSettings");
         if (savedSettings) {
             gameSettings = JSON.parse(savedSettings);
             applySettings();
@@ -1358,7 +1407,7 @@ var SpaceShooterGame;
             angle: angle,
             type: BULLET_TYPES.NORMAL,
             isPlayerBullet: false,
-            range: 100
+            range: 100,
         };
         bullets.push(bullet);
     }
@@ -1375,7 +1424,7 @@ var SpaceShooterGame;
             type: BULLET_TYPES.LASER,
             isPlayerBullet: false,
             duration: 120,
-            range: 100
+            range: 100,
         };
         bullets.push(laser);
     }
@@ -1389,14 +1438,20 @@ var SpaceShooterGame;
         // ... (其他属性设置)
         return particle;
     }
-    // 添加更新粒子函数
+    // 添加更��子函数
     function updateParticles(deltaTime) {
         particles = particles.filter(function (particle) {
             particle.x += particle.velocity.x * (deltaTime / 16);
             particle.y += particle.velocity.y * (deltaTime / 16);
             particle.alpha -= deltaTime * 0.02;
             particle.life -= deltaTime / 16;
-            return particle.alpha > 0 && particle.life > 0;
+            // 添加重力效果
+            particle.velocity.y += particle.gravity || 0;
+            // 缩小粒子
+            if (particle.shrink) {
+                particle.radius *= particle.shrink;
+            }
+            return particle.alpha > 0 && particle.life > 0 && particle.radius > 0.1;
         });
     }
     // 添加绘制粒子函数
@@ -1416,15 +1471,15 @@ var SpaceShooterGame;
         achievements.forEach(function (achievement) {
             if (!achievement.isUnlocked) {
                 switch (achievement.id) {
-                    case 'firstKill':
+                    case "firstKill":
                         if (player.score >= 10) {
                             achievement.progress = 1;
                         }
                         break;
-                    case 'sharpshooter':
+                    case "sharpshooter":
                         // 在击中敌人时更新
                         break;
-                    case 'survivor':
+                    case "survivor":
                         achievement.progress = Math.min(gameTime, achievement.maxProgress);
                         break;
                 }
@@ -1444,17 +1499,17 @@ var SpaceShooterGame;
     function applyPowerUp(powerUp) {
         console.log("Applying power-up: ".concat(powerUp.type));
         switch (powerUp.type) {
-            case 'health':
+            case "health":
                 player.health = Math.min(player.health + 20, player.maxHealth);
                 createHealingEffect();
                 console.log("Player health increased to ".concat(player.health));
                 break;
-            case 'shield':
+            case "shield":
                 player.shield = Math.min(player.shield + 50, 100);
                 createShieldEffect();
                 console.log("Player shield increased to ".concat(player.shield));
                 break;
-            case 'speedBoost':
+            case "speedBoost":
                 player.speed *= 1.5;
                 createSpeedTrail();
                 setTimeout(function () {
@@ -1462,21 +1517,21 @@ var SpaceShooterGame;
                     removeSpeedTrail();
                 }, 5000);
                 break;
-            case 'spreadShot':
+            case "spreadShot":
                 addBulletType(BULLET_TYPES.SPREAD, 10000);
                 break;
-            case 'laserShot':
+            case "laserShot":
                 addBulletType(BULLET_TYPES.LASER, 10000);
                 break;
-            case 'homingMissile':
+            case "homingMissile":
                 addBulletType(BULLET_TYPES.HOMING, 10000);
                 break;
-            case 'flamethrower':
+            case "flamethrower":
                 addBulletType(BULLET_TYPES.FLAME, 10000);
                 break;
         }
         gameStats.powerUpsCollected++;
-        playSound('powerUp');
+        playSound("powerUp");
         createPowerUpCollectionEffect(powerUp);
     }
     // 添加清除所有敌人函数
@@ -1498,8 +1553,8 @@ var SpaceShooterGame;
     }
     // 添加绘制游戏统计函数
     function drawGameStats() {
-        ctx.fillStyle = '#FFF';
-        ctx.font = '14px Arial';
+        ctx.fillStyle = "#FFF";
+        ctx.font = "14px Arial";
         ctx.fillText("\u654C\u4EBA\u6D88\u706D: ".concat(gameStats.enemiesDestroyed), canvas.width - 150, 30);
         ctx.fillText("\u5B50\u5F39\u53D1\u5C04: ".concat(gameStats.bulletsFired), canvas.width - 150, 50);
         ctx.fillText("\u9053\u5177\u6536\u96C6: ".concat(gameStats.powerUpsCollected), canvas.width - 150, 70);
@@ -1522,11 +1577,11 @@ var SpaceShooterGame;
     function playerTakeDamage(damage) {
         if (player.shield > 0) {
             player.shield = Math.max(0, player.shield - damage);
-            playSound('shieldHit');
+            playSound("shieldHit");
         }
         else {
             player.health = Math.max(0, player.health - damage);
-            playSound('playerHit');
+            playSound("playerHit");
             shakeScreen();
         }
         // 添加无敌时间
@@ -1572,7 +1627,7 @@ var SpaceShooterGame;
     // 添加 fireSpreadBullets 函数
     function fireSpreadBullets(boss) {
         for (var i = -2; i <= 2; i++) {
-            createBossBullet(boss, 5, Math.PI / 2 + i * Math.PI / 12);
+            createBossBullet(boss, 5, Math.PI / 2 + (i * Math.PI) / 12);
         }
     }
     // 添加 fireLaser 函数
@@ -1588,7 +1643,7 @@ var SpaceShooterGame;
             type: BULLET_TYPES.LASER,
             isPlayerBullet: false,
             duration: 60,
-            range: 100
+            range: 100,
         };
         bullets.push(laser);
     }
@@ -1604,7 +1659,7 @@ var SpaceShooterGame;
             angle: 0,
             type: BULLET_TYPES.NORMAL,
             isPlayerBullet: true,
-            range: 100
+            range: 100,
         };
     }
     function createNewParticle() {
@@ -1612,11 +1667,33 @@ var SpaceShooterGame;
             x: 0,
             y: 0,
             radius: 1,
-            color: '#FFFFFF',
+            color: "#FFFFFF",
             velocity: { x: 0, y: 0 },
             alpha: 1,
-            life: 20
+            life: 20,
         };
+    }
+    function createFlameSpread(shooter) {
+        var spreadCount = 5; // 同时发射5颗火焰弹
+        var spreadAngle = Math.PI / 3; // 60度的扩散角度
+        for (var i = 0; i < spreadCount; i++) {
+            var angle = -spreadAngle / 2 + (spreadAngle / (spreadCount - 1)) * i;
+            var bullet = {
+                x: shooter.x + shooter.width / 2,
+                y: shooter.y,
+                width: 15,
+                height: 15,
+                speed: 4,
+                damage: 0.5,
+                angle: -Math.PI / 2 + angle, // 基础向上方向加上扩散角度
+                type: BULLET_TYPES.FLAME,
+                isPlayerBullet: true,
+                range: 200, // 最大射程
+                distanceTraveled: 0, // 已经行进的距离
+            };
+            bullets.push(bullet);
+        }
+        playSound("flame"); // 播放火焰发射音效
     }
     // 添加 updateExplosions 函数
     function updateExplosions(deltaTime) {
@@ -1639,10 +1716,10 @@ var SpaceShooterGame;
                 color: "hsl(".concat(Math.random() * 60 + 15, ", 100%, ").concat(Math.random() * 50 + 50, "%)"),
                 velocity: {
                     x: Math.cos(angle) * speed,
-                    y: Math.sin(angle) * speed
+                    y: Math.sin(angle) * speed,
                 },
                 alpha: 1,
-                life: Math.random() * 20 + 10
+                life: Math.random() * 20 + 10,
             });
         }
     }
@@ -1653,8 +1730,8 @@ var SpaceShooterGame;
         }
     }
     function updateHealthBar() {
-        var healthBar = document.getElementById('healthBar');
-        var healthBarContainer = document.getElementById('healthBarContainer');
+        var healthBar = document.getElementById("healthBar");
+        var healthBarContainer = document.getElementById("healthBarContainer");
         if (healthBar && healthBarContainer) {
             var healthPercentage = (player.health / player.maxHealth) * 100;
             healthBar.style.width = "".concat(healthPercentage, "%");
@@ -1663,10 +1740,10 @@ var SpaceShooterGame;
             var hue = (healthPercentage / 100) * 120; // 0 是红色，120 是绿色
             healthBar.style.backgroundColor = "hsl(".concat(hue, ", 100%, 50%)");
             // 确保容器可见
-            healthBarContainer.style.display = 'block';
+            healthBarContainer.style.display = "block";
         }
         else {
-            console.error('Health bar elements not found!'); // 调试日志
+            console.error("Health bar elements not found!"); // 调试日志
         }
     }
     // 添加新的函数来播放道具音效
@@ -1676,7 +1753,7 @@ var SpaceShooterGame;
     }
     // 添加新的函数来绘制特定类型的子弹
     function drawFireBullet(bullet) {
-        ctx.fillStyle = '#FF9500';
+        ctx.fillStyle = "#FF9500";
         ctx.beginPath();
         ctx.moveTo(bullet.x, bullet.y);
         ctx.lineTo(bullet.x - bullet.width / 2, bullet.y + bullet.height);
@@ -1697,9 +1774,9 @@ var SpaceShooterGame;
         ctx.lineTo(bullet.x, 0);
         ctx.stroke();
         // 添加发光效果
-        ctx.shadowColor = 'rgba(0, 255, 255, 0.8)';
+        ctx.shadowColor = "rgba(0, 255, 255, 0.8)";
         ctx.shadowBlur = 10;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
         ctx.lineWidth = bullet.width / 2;
         ctx.beginPath();
         ctx.moveTo(bullet.x, bullet.y);
@@ -1708,7 +1785,7 @@ var SpaceShooterGame;
         ctx.restore();
     }
     function drawSpreadBullet(bullet) {
-        ctx.fillStyle = '#FFD700';
+        ctx.fillStyle = "#FFD700";
         ctx.beginPath();
         ctx.arc(bullet.x, bullet.y, bullet.width / 2, 0, Math.PI * 2);
         ctx.fill();
@@ -1720,7 +1797,8 @@ var SpaceShooterGame;
             if (Object.prototype.hasOwnProperty.call(player.bulletDurations, bulletType)) {
                 var duration = player.bulletDurations[bulletType];
                 if (duration !== undefined) {
-                    player.bulletDurations[bulletType] = duration - deltaTime;
+                    player.bulletDurations[bulletType] =
+                        duration - deltaTime;
                     if (player.bulletDurations[bulletType] <= 0) {
                         player.activeBulletTypes.delete(bulletType);
                         delete player.bulletDurations[bulletType];
@@ -1732,7 +1810,7 @@ var SpaceShooterGame;
     // 添加 updateBullets 函数
     function updateBullets(deltaTime) {
         bullets = bullets.filter(function (bullet, index) {
-            var _a;
+            var _a, _b;
             if (bullet.type === BULLET_TYPES.HOMING) {
                 if (bullet.target && !enemies.includes(bullet.target)) {
                     // 如果目标敌人不存在，寻找新目标
@@ -1743,10 +1821,10 @@ var SpaceShooterGame;
                     var dy = bullet.target.y - bullet.y;
                     var distance = Math.sqrt(dx * dx + dy * dy);
                     // 使用插值来平滑火箭的移动
-                    var t = Math.min(bullet.speed * (deltaTime / 16) / distance, 1);
+                    var t = Math.min((bullet.speed * (deltaTime / 16)) / distance, 1);
                     bullet.x += dx * t;
                     bullet.y += dy * t;
-                    // 更新火箭的角度，使其朝向目标
+                    // 更新火箭的角度，使其朝向目标prett
                     bullet.angle = Math.atan2(dy, dx);
                 }
                 else {
@@ -1755,9 +1833,13 @@ var SpaceShooterGame;
                 }
             }
             else if (bullet.type === BULLET_TYPES.FLAME) {
-                // 火焰弹的特殊行为
-                bullet.range -= bullet.speed * (deltaTime / 16);
-                if (bullet.range <= 0) {
+                var dx = Math.cos(bullet.angle) * bullet.speed;
+                var dy = Math.sin(bullet.angle) * bullet.speed;
+                bullet.x += dx;
+                bullet.y += dy;
+                bullet.distanceTraveled = (_b = bullet.distanceTraveled) !== null && _b !== void 0 ? _b : 0;
+                bullet.distanceTraveled += Math.sqrt(dx * dx + dy * dy);
+                if (bullet.distanceTraveled >= bullet.range) {
                     return false; // 移除超出射程的火焰弹
                 }
                 // 创建火焰粒子效果
@@ -1768,7 +1850,10 @@ var SpaceShooterGame;
                 bullet.y += Math.sin(bullet.angle) * bullet.speed * (deltaTime / 16);
             }
             // 移除出屏幕的子弹
-            return !(bullet.y < 0 || bullet.y > canvas.height || bullet.x < 0 || bullet.x > canvas.width);
+            return !(bullet.y < 0 ||
+                bullet.y > canvas.height ||
+                bullet.x < 0 ||
+                bullet.x > canvas.width);
         });
     }
     function addBulletType(type, duration) {
@@ -1783,23 +1868,23 @@ var SpaceShooterGame;
                 x: player.x + player.width / 2,
                 y: player.y + player.height / 2,
                 radius: Math.random() * 3 + 1,
-                color: '#4CD964',
+                color: "#4CD964",
                 velocity: {
                     x: (Math.random() - 0.5) * 3,
-                    y: (Math.random() - 0.5) * 3
+                    y: (Math.random() - 0.5) * 3,
                 },
                 alpha: 1,
-                life: 30
+                life: 30,
             });
         }
     }
     function createShieldEffect() {
-        ctx.strokeStyle = 'rgba(90, 200, 250, 0.7)';
+        ctx.strokeStyle = "rgba(90, 200, 250, 0.7)";
         ctx.lineWidth = 5;
         ctx.beginPath();
         ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width * 0.7, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(90, 200, 250, 0.3)';
+        ctx.strokeStyle = "rgba(90, 200, 250, 0.3)";
         ctx.lineWidth = 10;
         ctx.beginPath();
         ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width * 0.8, 0, Math.PI * 2);
@@ -1812,10 +1897,10 @@ var SpaceShooterGame;
                 x: player.x + player.width / 2,
                 y: player.y + player.height,
                 radius: 2,
-                color: '#5AC8FA',
+                color: "#5AC8FA",
                 velocity: { x: 0, y: 2 },
                 alpha: 0.7,
-                life: 20
+                life: 20,
             });
         }, 50);
     }
@@ -1824,7 +1909,7 @@ var SpaceShooterGame;
     }
     function createDoubleFiringEffect() {
         // 在玩家飞船两侧添加发光点
-        ctx.fillStyle = '#FFD700';
+        ctx.fillStyle = "#FFD700";
         ctx.beginPath();
         ctx.arc(player.x + 5, player.y + 10, 3, 0, Math.PI * 2);
         ctx.arc(player.x + player.width - 5, player.y + 10, 3, 0, Math.PI * 2);
@@ -1834,7 +1919,7 @@ var SpaceShooterGame;
         // 移除发光点效果（在下一帧绘制时自然消失）
     }
     function createScreenWipeEffect() {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         setTimeout(function () {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1851,15 +1936,15 @@ var SpaceShooterGame;
                 color: "hsl(".concat(Math.random() * 60 + 15, ", 100%, 50%)"),
                 velocity: {
                     x: Math.cos(angle) * 2,
-                    y: Math.sin(angle) * 2
+                    y: Math.sin(angle) * 2,
                 },
                 alpha: 1,
-                life: 30
+                life: 30,
             });
         }
     }
     function createLaserSights() {
-        ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
         ctx.lineWidth = 2;
         for (var i = -1; i <= 1; i += 0.5) {
             ctx.beginPath();
@@ -1869,10 +1954,10 @@ var SpaceShooterGame;
         }
     }
     function createSpreadIndicators() {
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+        ctx.strokeStyle = "rgba(255, 215, 0, 0.5)";
         ctx.lineWidth = 2;
         for (var i = -2; i <= 2; i++) {
-            var angle = i * Math.PI / 12;
+            var angle = (i * Math.PI) / 12;
             ctx.beginPath();
             ctx.moveTo(player.x + player.width / 2, player.y);
             ctx.lineTo(player.x + player.width / 2 + Math.sin(angle) * 50, player.y - Math.cos(angle) * 50);
@@ -1880,12 +1965,12 @@ var SpaceShooterGame;
         }
     }
     function createMissileLaunchers() {
-        ctx.fillStyle = '#808080';
+        ctx.fillStyle = "#808080";
         ctx.fillRect(player.x - 5, player.y + 20, 5, 10);
         ctx.fillRect(player.x + player.width, player.y + 20, 5, 10);
     }
     function createEmpField() {
-        ctx.strokeStyle = 'rgba(0, 191, 255, 0.5)';
+        ctx.strokeStyle = "rgba(0, 191, 255, 0.5)";
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width, 0, Math.PI * 2);
@@ -1895,28 +1980,28 @@ var SpaceShooterGame;
         setInterval(function () {
             var angle = Math.random() * Math.PI * 2;
             particles.push({
-                x: player.x + player.width / 2 + Math.cos(angle) * player.width / 2,
-                y: player.y + player.height / 2 + Math.sin(angle) * player.height / 2,
+                x: player.x + player.width / 2 + (Math.cos(angle) * player.width) / 2,
+                y: player.y + player.height / 2 + (Math.sin(angle) * player.height) / 2,
                 radius: Math.random() * 2 + 1,
-                color: '#A5F2F3',
+                color: "#A5F2F3",
                 velocity: {
                     x: Math.cos(angle) * 1.5,
-                    y: Math.sin(angle) * 1.5
+                    y: Math.sin(angle) * 1.5,
                 },
                 alpha: 0.7,
-                life: 25
+                life: 25,
             });
         }, 50);
     }
     function createPiercingGlow() {
-        ctx.shadowColor = '#FFD700';
+        ctx.shadowColor = "#FFD700";
         ctx.shadowBlur = 20;
-        ctx.fillStyle = '#FFD700';
+        ctx.fillStyle = "#FFD700";
         ctx.fillRect(player.x, player.y, player.width, player.height);
         ctx.shadowBlur = 0;
     }
     function createSplitIndicators() {
-        ctx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+        ctx.strokeStyle = "rgba(255, 165, 0, 0.5)";
         ctx.lineWidth = 2;
         var splitAngle = Math.PI / 6;
         for (var i = -1; i <= 1; i += 2) {
@@ -1927,13 +2012,13 @@ var SpaceShooterGame;
         }
     }
     function createTimeDistortionEffect() {
-        ctx.fillStyle = 'rgba(128, 0, 128, 0.2)';
+        ctx.fillStyle = "rgba(128, 0, 128, 0.2)";
         ctx.beginPath();
         ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width * 1.5, 0, Math.PI * 2);
         ctx.fill();
     }
     function createGravityWellEffect() {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
         ctx.lineWidth = 2;
         for (var i = 0; i < 3; i++) {
             ctx.beginPath();
@@ -1951,7 +2036,7 @@ var SpaceShooterGame;
                 color: "hsl(".concat(hue, ", 100%, 50%)"),
                 velocity: { x: 0, y: 2 },
                 alpha: 0.7,
-                life: 30
+                life: 30,
             });
         }, 30);
     }
@@ -1959,7 +2044,7 @@ var SpaceShooterGame;
         setInterval(function () {
             var x = player.x + Math.random() * player.width;
             var y = player.y + Math.random() * player.height;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
             ctx.beginPath();
             ctx.arc(x, y, 2, 0, Math.PI * 2);
             ctx.fill();
@@ -1970,7 +2055,7 @@ var SpaceShooterGame;
     }
     function createTargetingSystem() {
         enemies.forEach(function (enemy) {
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(player.x + player.width / 2, player.y);
@@ -1979,7 +2064,7 @@ var SpaceShooterGame;
         });
     }
     function createWaveEmitters() {
-        ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+        ctx.strokeStyle = "rgba(0, 255, 255, 0.5)";
         ctx.lineWidth = 2;
         for (var i = 0; i < 3; i++) {
             ctx.beginPath();
@@ -1988,11 +2073,11 @@ var SpaceShooterGame;
         }
     }
     function createClusterIndicators() {
-        ctx.fillStyle = 'rgba(255, 69, 0, 0.5)';
+        ctx.fillStyle = "rgba(255, 69, 0, 0.5)";
         for (var i = 0; i < 5; i++) {
             var angle = (i / 5) * Math.PI * 2;
-            var x = player.x + player.width / 2 + Math.cos(angle) * player.width / 2;
-            var y = player.y + player.height / 2 + Math.sin(angle) * player.height / 2;
+            var x = player.x + player.width / 2 + (Math.cos(angle) * player.width) / 2;
+            var y = player.y + player.height / 2 + (Math.sin(angle) * player.height) / 2;
             ctx.beginPath();
             ctx.arc(x, y, 3, 0, Math.PI * 2);
             ctx.fill();
@@ -2007,10 +2092,10 @@ var SpaceShooterGame;
                 color: getPowerUpColor(powerUp.type),
                 velocity: {
                     x: (Math.random() - 0.5) * 5,
-                    y: (Math.random() - 0.5) * 5
+                    y: (Math.random() - 0.5) * 5,
                 },
                 alpha: 1,
-                life: 40
+                life: 40,
             });
         }
     }
@@ -2026,100 +2111,106 @@ var SpaceShooterGame;
         }
         if (player.currentBulletType === BULLET_TYPES.DOUBLE) {
             createDoubleFiringEffect();
-            console.log('Drawing double firing effect'); // 添加日志
+            console.log("Drawing double firing effect"); // 添加日志
         }
         // 遍历所有活跃的子弹类型
         player.activeBulletTypes.forEach(function (bulletType) {
             switch (bulletType) {
                 case BULLET_TYPES.FIRE:
                     createFireAura();
-                    console.log('Drawing fire aura'); // 添加日志
+                    console.log("Drawing fire aura"); // 添加日志
                     break;
                 case BULLET_TYPES.LASER:
                     // createLaserSights();
-                    console.log('Drawing laser sights'); // 添加日志
+                    console.log("Drawing laser sights"); // 添加日志
                     break;
                 case BULLET_TYPES.SPREAD:
                     // createSpreadIndicators();
-                    console.log('Drawing spread indicators'); // 添加日志
+                    console.log("Drawing spread indicators"); // 添加日志
                     break;
                 case BULLET_TYPES.MISSILE:
                     createMissileLaunchers();
-                    console.log('Drawing missile launchers'); // 添加日志
+                    console.log("Drawing missile launchers"); // 添加日志
                     break;
                 case BULLET_TYPES.EMP:
                     createEmpField();
-                    console.log('Drawing EMP field'); // 添加日志
+                    console.log("Drawing EMP field"); // 添加日志
                     break;
                 case BULLET_TYPES.FREEZE:
                     createFrostAura();
-                    console.log('Drawing frost aura'); // 添加日志
+                    console.log("Drawing frost aura"); // 添加日志
                     break;
                 case BULLET_TYPES.PIERCE:
                     createPiercingGlow();
-                    console.log('Drawing piercing glow'); // 添加日志
+                    console.log("Drawing piercing glow"); // 添加日志
                     break;
                 case BULLET_TYPES.SPLIT:
                     createSplitIndicators();
-                    console.log('Drawing split indicators'); // 添加日志
+                    console.log("Drawing split indicators"); // 添加日志
                     break;
                 case BULLET_TYPES.TIME_WARP:
                     createTimeDistortionEffect();
-                    console.log('Drawing time distortion effect'); // 添加日志
+                    console.log("Drawing time distortion effect"); // 添加日志
                     break;
                 case BULLET_TYPES.BLACK_HOLE:
                     createGravityWellEffect();
-                    console.log('Drawing gravity well effect'); // 添加日志
+                    console.log("Drawing gravity well effect"); // 添加日志
                     break;
                 case BULLET_TYPES.RAINBOW:
                     createRainbowTrail();
-                    console.log('Drawing rainbow trail'); // 添加日志
+                    console.log("Drawing rainbow trail"); // 添加日志
                     break;
                 case BULLET_TYPES.QUANTUM:
                     createQuantumFluctuations();
-                    console.log('Drawing quantum fluctuations'); // 添加日志
+                    console.log("Drawing quantum fluctuations"); // 添加日志
                     break;
                 case BULLET_TYPES.HOMING:
                     // createTargetingSystem();
-                    console.log('Drawing targeting system'); // 添加日志
+                    console.log("Drawing targeting system"); // 添加日志
                     break;
                 case BULLET_TYPES.WAVE:
                     createWaveEmitters();
-                    console.log('Drawing wave emitters'); // 添加日志
+                    console.log("Drawing wave emitters"); // 添加日志
                     break;
                 case BULLET_TYPES.CLUSTER:
                     createClusterIndicators();
-                    console.log('Drawing cluster indicators'); // 添加日志
+                    console.log("Drawing cluster indicators"); // 添加日志
                     break;
             }
         });
     }
 })(SpaceShooterGame || (SpaceShooterGame = {}));
 // 修改事件监听器，使用命名空间访问
-document.addEventListener('keydown', function (e) {
+document.addEventListener("keydown", function (e) {
     if (e.key in SpaceShooterGame.keys) {
         SpaceShooterGame.keys[e.key] = true;
     }
 });
-document.addEventListener('keyup', function (e) {
+document.addEventListener("keyup", function (e) {
     if (e.key in SpaceShooterGame.keys) {
         SpaceShooterGame.keys[e.key] = false;
     }
 });
 // 在文档加载完成初始化游戏
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener("DOMContentLoaded", function () {
     var _a, _b, _c, _d, _e, _f;
     SpaceShooterGame.initGame();
-    (_a = document.getElementById('startButton')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', SpaceShooterGame.startGame);
-    (_b = document.getElementById('restartButton')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', SpaceShooterGame.startGame);
-    (_c = document.getElementById('pauseButton')) === null || _c === void 0 ? void 0 : _c.addEventListener('click', SpaceShooterGame.togglePause);
-    (_d = document.getElementById('difficultySelect')) === null || _d === void 0 ? void 0 : _d.addEventListener('change', function (e) {
+    (_a = document
+        .getElementById("startButton")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", SpaceShooterGame.startGame);
+    (_b = document
+        .getElementById("restartButton")) === null || _b === void 0 ? void 0 : _b.addEventListener("click", SpaceShooterGame.startGame);
+    (_c = document
+        .getElementById("pauseButton")) === null || _c === void 0 ? void 0 : _c.addEventListener("click", SpaceShooterGame.togglePause);
+    (_d = document
+        .getElementById("difficultySelect")) === null || _d === void 0 ? void 0 : _d.addEventListener("change", function (e) {
         SpaceShooterGame.updateDifficulty(e.target.value);
     });
-    (_e = document.getElementById('soundVolumeSlider')) === null || _e === void 0 ? void 0 : _e.addEventListener('input', function (e) {
+    (_e = document
+        .getElementById("soundVolumeSlider")) === null || _e === void 0 ? void 0 : _e.addEventListener("input", function (e) {
         SpaceShooterGame.updateSoundVolume(parseFloat(e.target.value));
     });
-    (_f = document.getElementById('musicVolumeSlider')) === null || _f === void 0 ? void 0 : _f.addEventListener('input', function (e) {
+    (_f = document
+        .getElementById("musicVolumeSlider")) === null || _f === void 0 ? void 0 : _f.addEventListener("input", function (e) {
         SpaceShooterGame.updateMusicVolume(parseFloat(e.target.value));
     });
 });
