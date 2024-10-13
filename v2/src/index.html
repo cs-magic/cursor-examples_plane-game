@@ -364,12 +364,13 @@
         /* 在现有的样式后面添加以下码 */
         #mobileControls {
             position: absolute;
-            bottom: 20px;
+            bottom: calc(env(safe-area-inset-bottom, 20px) + 40px); /* 增加了 40px */
             left: 20px;
             right: 20px;
             display: flex;
             justify-content: space-between;
-            z-index: 10;
+            pointer-events: auto;
+            z-index: 100;
         }
 
         #joystickContainer {
@@ -378,6 +379,9 @@
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             position: relative;
+            pointer-events: auto;
+            touch-action: none;
+            margin-bottom: 20px; /* 添加这行 */
         }
 
         #joystick {
@@ -386,13 +390,15 @@
             background-color: rgba(255, 255, 255, 0.5);
             border-radius: 50%;
             position: absolute;
-            top: 30px;
-            left: 30px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         #actionButtons {
             display: flex;
             flex-direction: column;
+            gap: 10px;
         }
 
         .actionButton {
@@ -400,12 +406,12 @@
             height: 80px;
             border-radius: 50%;
             background-color: rgba(255, 255, 255, 0.2);
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            border: none;
+            color: white;
             font-size: 16px;
-            color: #fff;
+            font-weight: bold;
+            pointer-events: auto;
+            touch-action: none;
         }
 
         @media (max-width: 768px) {
@@ -854,8 +860,8 @@
             <div id="joystick"></div>
         </div>
         <div id="actionButtons">
-            <button id="chargeButton" class="actionButton">蓄力</button>
-            <button id="specialButton" class="actionButton">特殊</button>
+            <button id="chargeButton" class="actionButton" style="display: none;">蓄力</button>
+            <button id="specialButton" class="actionButton" style="display: none;">特殊</button>
         </div>
     </div>
 
@@ -870,9 +876,10 @@
         <button id="restartButton" class="button">重新开始</button>
     </div>
     <div id="victoryScreen" style="display: none;">
-        <h2>胜利！</h2>
-        <p id="victoryScore"></p>
-        <button id="nextLevelButton" class="button">下一关</button>
+        <h2>恭喜通关！</h2>
+        <p id="finalScore"></p>
+        <button id="nextLevelButton">下一关</button>
+        <button id="restartButton">重新开始</button>
     </div>
     <div id="pauseScreen" style="display: none;">
         <h2>游戏暂停</h2>

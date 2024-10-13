@@ -8,6 +8,33 @@ namespace SpaceShooterGame {
   type BulletType = "normal" | "spread" | "laser" | "homing" | "flame";
   type EnemyType = "normal" | "fast" | "tough" | "boss" | "small" | "large";
 
+  interface PowerUp {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    type:
+      | "health"
+      | "shield"
+      | "speedBoost"
+      | "spreadShot"
+      | "laserShot"
+      | "homingMissile"
+      | "flamethrower";
+    speed: number;
+    icon: string;
+  }
+
+  const powerUpTypes: PowerUp["type"][] = [
+    "health",
+    "shield",
+    "speedBoost",
+    "spreadShot",
+    "laserShot",
+    "flamethrower",
+    "homingMissile",
+  ];
+
   interface Player {
     x: number;
     y: number;
@@ -70,32 +97,8 @@ namespace SpaceShooterGame {
     spreadAngle?: number;
     distanceTraveled?: number;
     scale?: number; // 添加缩放属性
+    lifetime?: number;
   }
-
-  interface PowerUp {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    type:
-      | "health"
-      | "shield"
-      | "speedBoost"
-      | "spreadShot"
-      | "laserShot"
-      | "homingMissile"
-      | "flamethrower";
-    speed: number;
-    icon: string;
-  }
-
-  const powerUpTypes: PowerUp["type"][] = [
-    // 'health', 'shield', 'speedBoost',
-    // 'spreadShot',
-    // 'laserShot',
-    "flamethrower",
-    // 'homingMissile',
-  ];
 
   interface GameSettings {
     gameDuration: number;
@@ -119,9 +122,8 @@ namespace SpaceShooterGame {
   interface Level {
     number: number;
     duration: number;
-    enemySpawnRate: number;
-    bossSpawnTime: number;
     requiredScore: number;
+    bossDefeated: boolean;
   }
 
   interface Boss extends Enemy {
@@ -182,28 +184,10 @@ namespace SpaceShooterGame {
   let backgroundMusicInterval: number;
   let currentLevel: Level;
   let levels: Level[] = [
-    {
-      number: 1,
-      duration: 10,
-      enemySpawnRate: 1,
-      bossSpawnTime: 50,
-      requiredScore: 100,
-    },
-    {
-      number: 2,
-      duration: 10,
-      enemySpawnRate: 1.5,
-      bossSpawnTime: 75,
-      requiredScore: 250,
-    },
-    {
-      number: 3,
-      duration: 10,
-      enemySpawnRate: 2,
-      bossSpawnTime: 100,
-      requiredScore: 500,
-    },
-    // 添加更多关卡...
+    { number: 1, duration: 10, requiredScore: 100, bossDefeated: false },
+    { number: 2, duration: 20, requiredScore: 200, bossDefeated: false },
+    { number: 3, duration: 30, requiredScore: 300, bossDefeated: false },
+    // 可以添加更多关卡...
   ];
   let isBossSpawned = false;
 
@@ -481,16 +465,22 @@ namespace SpaceShooterGame {
     // 更新游戏时间
     gameTime += deltaTime / 1000;
 
-    // 检查是否需要进入下一关
+    // 检查是否需要生成 Boss
     if (
-      gameTime >= currentLevel.duration ||
-      player.score >= currentLevel.requiredScore
+      !isBossSpawned &&
+      (gameTime >= currentLevel.duration ||
+        player.score >= currentLevel.requiredScore)
     ) {
-      if (currentLevel.number < levels.length) {
-        startNextLevel();
-      } else {
-        victoryGame();
-      }
+      console.log("Spawning boss for current level");
+      spawnBoss();
+      isBossSpawned = true;
+    }
+
+    // 检查是否击败 Boss 并进入下一关
+    if (currentLevel.bossDefeated) {
+      console.log("Boss defeated. Starting next level.");
+      startNextLevel();
+      return; // 结束当前帧的游戏循环
     }
 
     // 生成敌人
@@ -559,7 +549,9 @@ namespace SpaceShooterGame {
         x: bullet.x + (Math.random() - 0.5) * bullet.width,
         y: bullet.y + (Math.random() - 0.5) * bullet.height,
         radius: Math.random() * 3 + 1,
-        color: `hsl(${Math.random() * 30 + 15}, 100%, ${Math.random() * 50 + 50}%)`,
+        color: `hsl(${Math.random() * 30 + 15}, 100%, ${
+          Math.random() * 50 + 50
+        }%)`,
         velocity: {
           x: (Math.random() - 0.5) * 2,
           y: (Math.random() - 0.5) * 2,
@@ -1103,6 +1095,7 @@ namespace SpaceShooterGame {
       duration: 18, // 0.3秒 (假设60帧/秒)
       alpha: 1, // 初始完全不透明
       range: 100,
+      lifetime: 1000, // 1000毫秒 = 1秒  
     };
     bullets.push(laser);
   }
@@ -1196,7 +1189,7 @@ namespace SpaceShooterGame {
           ctx.rotate(angle + Math.PI / 2);
           break;
         case BULLET_TYPES.FLAME:
-        //   drawFlameBullet(bullet);
+          //   drawFlameBullet(bullet);
           break;
         default:
           ctx.rotate(bullet.angle + Math.PI / 2);
@@ -1588,21 +1581,40 @@ namespace SpaceShooterGame {
   // 在这里添加其他游戏函数...
 
   export function startNextLevel() {
+    console.log("Starting next level. Current level:", currentLevel);
     if (!currentLevel) {
       console.error("Current level is not initialized");
       return;
     }
 
-    const nextLevelIndex = currentLevel.number + 1;
+    const nextLevelIndex = currentLevel.number;
+    console.log("Next level index:", nextLevelIndex);
     if (nextLevelIndex >= levels.length) {
       console.log("Game completed! No more levels.");
+      victoryGame();
       return;
     }
 
     currentLevel = levels[nextLevelIndex];
-    // gameTime = 0;
+    console.log("New current level:", currentLevel);
+
+    // 重置游戏状态
+    gameTime = 0;
     isBossSpawned = false;
-    // 可以在这里添加关卡过渡的逻辑
+    enemies = [];
+    bullets = [];
+    powerUps = [];
+    currentLevel.bossDefeated = false;
+
+    // 更新难度
+    gameDifficulty =
+      getDifficultyValue(gameSettings.difficulty) +
+      (currentLevel.number - 1) * 0.2;
+
+    // 更新UI
+    // updateLevelDisplay();
+
+    console.log("Level transition complete");
   }
 
   function victoryGame() {
@@ -1614,6 +1626,7 @@ namespace SpaceShooterGame {
     document.getElementById(
       "finalScore"
     )!.textContent = `最终分数: ${player.score}`;
+    document.getElementById("nextLevelButton")!.style.display = "block";
   }
 
   function spawnBoss() {
@@ -1623,8 +1636,8 @@ namespace SpaceShooterGame {
       width: 150,
       height: 150,
       speed: 1,
-      health: 100,
-      maxHealth: 100,
+      health: 100 * currentLevel.number, // Boss 生命值随关卡增加
+      maxHealth: 100 * currentLevel.number,
       color: "#FF0000",
       type: "boss",
       lastShot: 0,
@@ -1637,7 +1650,6 @@ namespace SpaceShooterGame {
       burnTime: 0,
     };
     enemies.push(boss as Enemy);
-    isBossSpawned = true;
   }
 
   function updateBoss(boss: Boss, deltaTime: number) {
@@ -1680,6 +1692,16 @@ namespace SpaceShooterGame {
       boss.phase = 3;
       boss.attackPattern = "laser";
       boss.shootInterval = 1500;
+    }
+
+    if (boss.health <= 0) {
+      currentLevel.bossDefeated = true;
+      createExplosion(
+        boss.x + boss.width / 2,
+        boss.y + boss.height / 2,
+        boss.width
+      );
+      player.score += 1000 * currentLevel.number; // 击败 Boss 获得额外分数
     }
   }
 
@@ -1821,7 +1843,7 @@ namespace SpaceShooterGame {
     return particle;
   }
 
-  // 添加更��子函数
+  // 添加更子函数
   function updateParticles(deltaTime: number) {
     particles = particles.filter((particle) => {
       particle.x += particle.velocity.x * (deltaTime / 16);
@@ -2100,7 +2122,7 @@ namespace SpaceShooterGame {
   function createFlameSpread(shooter: Player) {
     const spreadCount = 10; // 增加到10个火焰弹
     const spreadAngle = Math.PI / 2; // 扩大扩散角度到90度
-  
+
     for (let i = 0; i < spreadCount; i++) {
       const angle = -spreadAngle / 2 + (spreadAngle / (spreadCount - 1)) * i;
       const bullet: Bullet = {
@@ -2266,19 +2288,24 @@ namespace SpaceShooterGame {
         bullet.y += dy;
         bullet.distanceTraveled = bullet.distanceTraveled ?? 0;
         bullet.distanceTraveled += Math.sqrt(dx * dx + dy * dy);
-      
+
         // 随着距离增加，火焰弹变大
         bullet.scale = 1 + bullet.distanceTraveled / 100;
         bullet.width = 5 * bullet.scale;
         bullet.height = 5 * bullet.scale;
-      
+
         if (bullet.distanceTraveled >= bullet.range) {
           return false; // 移除超出射程的火焰弹
         }
-      
+
         // 创建更多的火焰粒子效果
         createFlameParticles(bullet);
-      } else {
+      } else     if (bullet.type === BULLET_TYPES.LASER) {
+        bullet.lifetime! -= deltaTime;
+        return bullet.lifetime! > 0;
+      }
+      
+      else {
         bullet.x += Math.cos(bullet.angle) * bullet.speed * (deltaTime / 16);
         bullet.y += Math.sin(bullet.angle) * bullet.speed * (deltaTime / 16);
       }
@@ -2618,7 +2645,7 @@ namespace SpaceShooterGame {
     player.activeBulletTypes.forEach((bulletType) => {
       switch (bulletType) {
         case BULLET_TYPES.FIRE:
-        //   createFireAura();
+          //   createFireAura();
           console.log("Drawing fire aura"); // 添加日志
           break;
         case BULLET_TYPES.LASER:
@@ -2728,4 +2755,7 @@ document.addEventListener("DOMContentLoaded", () => {
         parseFloat((e.target as HTMLInputElement).value)
       );
     });
+  document
+    .getElementById("nextLevelButton")
+    ?.addEventListener("click", SpaceShooterGame.startNextLevel);
 });

@@ -2,11 +2,13 @@
 var SpaceShooterGame;
 (function (SpaceShooterGame) {
     var powerUpTypes = [
-        // 'health', 'shield', 'speedBoost',
-        // 'spreadShot',
-        // 'laserShot',
+        "health",
+        "shield",
+        "speedBoost",
+        "spreadShot",
+        "laserShot",
         "flamethrower",
-        // 'homingMissile',
+        "homingMissile",
     ];
     // 全局变量声明
     var canvas;
@@ -27,28 +29,10 @@ var SpaceShooterGame;
     var backgroundMusicInterval;
     var currentLevel;
     var levels = [
-        {
-            number: 1,
-            duration: 10,
-            enemySpawnRate: 1,
-            bossSpawnTime: 50,
-            requiredScore: 100,
-        },
-        {
-            number: 2,
-            duration: 10,
-            enemySpawnRate: 1.5,
-            bossSpawnTime: 75,
-            requiredScore: 250,
-        },
-        {
-            number: 3,
-            duration: 10,
-            enemySpawnRate: 2,
-            bossSpawnTime: 100,
-            requiredScore: 500,
-        },
-        // 添加更多关卡...
+        { number: 1, duration: 10, requiredScore: 100, bossDefeated: false },
+        { number: 2, duration: 20, requiredScore: 200, bossDefeated: false },
+        { number: 3, duration: 30, requiredScore: 300, bossDefeated: false },
+        // 可以添加更多关卡...
     ];
     var isBossSpawned = false;
     // 游戏设置
@@ -268,15 +252,19 @@ var SpaceShooterGame;
         lastTime = currentTime;
         // 更新游戏时间
         gameTime += deltaTime / 1000;
-        // 检查是否需要进入下一关
-        if (gameTime >= currentLevel.duration ||
-            player.score >= currentLevel.requiredScore) {
-            if (currentLevel.number < levels.length) {
-                startNextLevel();
-            }
-            else {
-                victoryGame();
-            }
+        // 检查是否需要生成 Boss
+        if (!isBossSpawned &&
+            (gameTime >= currentLevel.duration ||
+                player.score >= currentLevel.requiredScore)) {
+            console.log("Spawning boss for current level");
+            spawnBoss();
+            isBossSpawned = true;
+        }
+        // 检查是否击败 Boss 并进入下一关
+        if (currentLevel.bossDefeated) {
+            console.log("Boss defeated. Starting next level.");
+            startNextLevel();
+            return; // 结束当前帧的游戏循环
         }
         // 生成敌人
         if (currentTime - lastEnemySpawnTime > 1000) {
@@ -798,6 +786,7 @@ var SpaceShooterGame;
             duration: 18, // 0.3秒 (假设60帧/秒)
             alpha: 1, // 初始完全不透明
             range: 100,
+            lifetime: 1000, // 1000毫秒 = 1秒  
         };
         bullets.push(laser);
     }
@@ -1212,19 +1201,34 @@ var SpaceShooterGame;
     }
     // 在这里添加其他游戏函数...
     function startNextLevel() {
+        console.log("Starting next level. Current level:", currentLevel);
         if (!currentLevel) {
             console.error("Current level is not initialized");
             return;
         }
-        var nextLevelIndex = currentLevel.number + 1;
+        var nextLevelIndex = currentLevel.number;
+        console.log("Next level index:", nextLevelIndex);
         if (nextLevelIndex >= levels.length) {
             console.log("Game completed! No more levels.");
+            victoryGame();
             return;
         }
         currentLevel = levels[nextLevelIndex];
-        // gameTime = 0;
+        console.log("New current level:", currentLevel);
+        // 重置游戏状态
+        gameTime = 0;
         isBossSpawned = false;
-        // 可以在这里添加关卡过渡的逻辑
+        enemies = [];
+        bullets = [];
+        powerUps = [];
+        currentLevel.bossDefeated = false;
+        // 更新难度
+        gameDifficulty =
+            getDifficultyValue(gameSettings.difficulty) +
+                (currentLevel.number - 1) * 0.2;
+        // 更新UI
+        // updateLevelDisplay();
+        console.log("Level transition complete");
     }
     SpaceShooterGame.startNextLevel = startNextLevel;
     function victoryGame() {
@@ -1234,6 +1238,7 @@ var SpaceShooterGame;
         playSound("victory");
         document.getElementById("victoryScreen").style.display = "flex";
         document.getElementById("finalScore").textContent = "\u6700\u7EC8\u5206\u6570: ".concat(player.score);
+        document.getElementById("nextLevelButton").style.display = "block";
     }
     function spawnBoss() {
         var boss = {
@@ -1242,8 +1247,8 @@ var SpaceShooterGame;
             width: 150,
             height: 150,
             speed: 1,
-            health: 100,
-            maxHealth: 100,
+            health: 100 * currentLevel.number, // Boss 生命值随关卡增加
+            maxHealth: 100 * currentLevel.number,
             color: "#FF0000",
             type: "boss",
             lastShot: 0,
@@ -1256,7 +1261,6 @@ var SpaceShooterGame;
             burnTime: 0,
         };
         enemies.push(boss);
-        isBossSpawned = true;
     }
     function updateBoss(boss, deltaTime) {
         // Boss的移动模式
@@ -1293,6 +1297,11 @@ var SpaceShooterGame;
             boss.phase = 3;
             boss.attackPattern = "laser";
             boss.shootInterval = 1500;
+        }
+        if (boss.health <= 0) {
+            currentLevel.bossDefeated = true;
+            createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width);
+            player.score += 1000 * currentLevel.number; // 击败 Boss 获得额外分数
         }
     }
     function drawBoss(boss) {
@@ -1417,7 +1426,7 @@ var SpaceShooterGame;
         // ... (其他属性设置)
         return particle;
     }
-    // 添加更��子函数
+    // 添加更子函数
     function updateParticles(deltaTime) {
         particles = particles.filter(function (particle) {
             particle.x += particle.velocity.x * (deltaTime / 16);
@@ -1813,6 +1822,10 @@ var SpaceShooterGame;
                 // 创建更多的火焰粒子效果
                 createFlameParticles(bullet);
             }
+            else if (bullet.type === BULLET_TYPES.LASER) {
+                bullet.lifetime -= deltaTime;
+                return bullet.lifetime > 0;
+            }
             else {
                 bullet.x += Math.cos(bullet.angle) * bullet.speed * (deltaTime / 16);
                 bullet.y += Math.sin(bullet.angle) * bullet.speed * (deltaTime / 16);
@@ -2161,7 +2174,7 @@ document.addEventListener("keyup", function (e) {
 });
 // 在文档加载完成初始化游戏
 document.addEventListener("DOMContentLoaded", function () {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     SpaceShooterGame.initGame();
     (_a = document
         .getElementById("startButton")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", SpaceShooterGame.startGame);
@@ -2181,4 +2194,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .getElementById("musicVolumeSlider")) === null || _f === void 0 ? void 0 : _f.addEventListener("input", function (e) {
         SpaceShooterGame.updateMusicVolume(parseFloat(e.target.value));
     });
+    (_g = document
+        .getElementById("nextLevelButton")) === null || _g === void 0 ? void 0 : _g.addEventListener("click", SpaceShooterGame.startNextLevel);
 });
