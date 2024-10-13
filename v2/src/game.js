@@ -327,11 +327,11 @@ var SpaceShooterGame;
         return enemy;
     }
     function createFlameParticles(bullet) {
-        var particleCount = 5;
+        var particleCount = 5; // 每帧创建的粒子数量
         for (var i = 0; i < particleCount; i++) {
             particles.push({
-                x: bullet.x,
-                y: bullet.y,
+                x: bullet.x + (Math.random() - 0.5) * bullet.width,
+                y: bullet.y + (Math.random() - 0.5) * bullet.height,
                 radius: Math.random() * 3 + 1,
                 color: "hsl(".concat(Math.random() * 30 + 15, ", 100%, ").concat(Math.random() * 50 + 50, "%)"),
                 velocity: {
@@ -543,8 +543,8 @@ var SpaceShooterGame;
     function updateAndDrawGameInfo() {
         ctx.fillStyle = "#FFF";
         ctx.font = "20px Arial";
-        ctx.fillText("\u5173\u5361: ".concat(level), 10, 30);
-        ctx.fillText("\u751F\u547D\u503C: ".concat(player.health, "/").concat(player.maxHealth), 10, 60);
+        ctx.fillText("\u5173\u5361: ".concat(level), 10, 60);
+        // ctx.fillText(`生命值: ${player.health}/${player.maxHealth}`, 10, 60);
         ctx.fillText("\u65F6\u95F4: ".concat(Math.floor(gameTime)), 10, 90);
         ctx.fillText("\u5F97\u5206: ".concat(player.score), 10, 120);
     }
@@ -681,7 +681,6 @@ var SpaceShooterGame;
                         break;
                     case BULLET_TYPES.FLAME:
                         if (currentTime_1 - player.lastFlameTime >= 500) {
-                            // 每2秒发射一次
                             createFlameSpread(player);
                             player.lastFlameTime = currentTime_1;
                         }
@@ -879,7 +878,7 @@ var SpaceShooterGame;
                     ctx.rotate(angle + Math.PI / 2);
                     break;
                 case BULLET_TYPES.FLAME:
-                    drawFlameBullet(bullet);
+                    //   drawFlameBullet(bullet);
                     break;
                 default:
                     ctx.rotate(bullet.angle + Math.PI / 2);
@@ -887,26 +886,6 @@ var SpaceShooterGame;
             }
             ctx.restore();
         });
-    }
-    function drawFlameBullet(bullet) {
-        ctx.fillStyle = "orange";
-        ctx.beginPath();
-        ctx.arc(0, 0, bullet.width / 2, 0, Math.PI * 2);
-        ctx.fill();
-        // 添加火焰尾迹
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        var gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, bullet.width * 2);
-        gradient.addColorStop(0, "yellow");
-        gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-bullet.width, bullet.height * 2);
-        ctx.lineTo(bullet.width, bullet.height * 2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
     }
     function spawnEnemy() {
         var enemyTypes = [
@@ -1204,7 +1183,7 @@ var SpaceShooterGame;
         else {
             document.getElementById("mobileControls").style.display = "none";
         }
-        document.getElementById("score").style.display = "block";
+        // document.getElementById("score")!.style.display = "block";
         // 初始化游元素
         createStars();
         clearInterval(enemySpawnInterval);
@@ -1243,7 +1222,7 @@ var SpaceShooterGame;
             return;
         }
         currentLevel = levels[nextLevelIndex];
-        gameTime = 0;
+        // gameTime = 0;
         isBossSpawned = false;
         // 可以在这里添加关卡过渡的逻辑
     }
@@ -1674,26 +1653,27 @@ var SpaceShooterGame;
         };
     }
     function createFlameSpread(shooter) {
-        var spreadCount = 5; // 同时发射5颗火焰弹
-        var spreadAngle = Math.PI / 3; // 60度的扩散角度
+        var spreadCount = 10; // 增加到10个火焰弹
+        var spreadAngle = Math.PI / 2; // 扩大扩散角度到90度
         for (var i = 0; i < spreadCount; i++) {
             var angle = -spreadAngle / 2 + (spreadAngle / (spreadCount - 1)) * i;
             var bullet = {
                 x: shooter.x + shooter.width / 2,
                 y: shooter.y,
-                width: 15,
-                height: 15,
-                speed: 4,
+                width: 5, // 初始宽度更小
+                height: 5, // 初始高度更小
+                speed: 6,
                 damage: 0.5,
-                angle: -Math.PI / 2 + angle, // 基础向上方向加上扩散角度
+                angle: -Math.PI / 2 + angle,
                 type: BULLET_TYPES.FLAME,
                 isPlayerBullet: true,
-                range: 200, // 最大射程
-                distanceTraveled: 0, // 已经行进的距离
+                range: 300, // 增加射程
+                distanceTraveled: 0,
+                scale: 1, // 添加缩放属性
             };
             bullets.push(bullet);
         }
-        playSound("flame"); // 播放火焰发射音效
+        playSound("flame");
     }
     // 添加 updateExplosions 函数
     function updateExplosions(deltaTime) {
@@ -1751,16 +1731,6 @@ var SpaceShooterGame;
         // 为每种子弹类型播放独特的音效
         playSound("powerUp_".concat(bulletType));
     }
-    // 添加新的函数来绘制特定类型的子弹
-    function drawFireBullet(bullet) {
-        ctx.fillStyle = "#FF9500";
-        ctx.beginPath();
-        ctx.moveTo(bullet.x, bullet.y);
-        ctx.lineTo(bullet.x - bullet.width / 2, bullet.y + bullet.height);
-        ctx.lineTo(bullet.x + bullet.width / 2, bullet.y + bullet.height);
-        ctx.closePath();
-        ctx.fill();
-    }
     function drawLaserBullet(bullet) {
         ctx.save();
         // 创建渐变效果
@@ -1783,12 +1753,6 @@ var SpaceShooterGame;
         ctx.lineTo(bullet.x, 0);
         ctx.stroke();
         ctx.restore();
-    }
-    function drawSpreadBullet(bullet) {
-        ctx.fillStyle = "#FFD700";
-        ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, bullet.width / 2, 0, Math.PI * 2);
-        ctx.fill();
     }
     // ... 为其他子弹类型添加类似的绘制函数
     // 添加新的函数来更新子弹持续时间
@@ -1839,10 +1803,14 @@ var SpaceShooterGame;
                 bullet.y += dy;
                 bullet.distanceTraveled = (_b = bullet.distanceTraveled) !== null && _b !== void 0 ? _b : 0;
                 bullet.distanceTraveled += Math.sqrt(dx * dx + dy * dy);
+                // 随着距离增加，火焰弹变大
+                bullet.scale = 1 + bullet.distanceTraveled / 100;
+                bullet.width = 5 * bullet.scale;
+                bullet.height = 5 * bullet.scale;
                 if (bullet.distanceTraveled >= bullet.range) {
                     return false; // 移除超出射程的火焰弹
                 }
-                // 创建火焰粒子效果
+                // 创建更多的火焰粒子效果
                 createFlameParticles(bullet);
             }
             else {
@@ -2117,7 +2085,7 @@ var SpaceShooterGame;
         player.activeBulletTypes.forEach(function (bulletType) {
             switch (bulletType) {
                 case BULLET_TYPES.FIRE:
-                    createFireAura();
+                    //   createFireAura();
                     console.log("Drawing fire aura"); // 添加日志
                     break;
                 case BULLET_TYPES.LASER:
